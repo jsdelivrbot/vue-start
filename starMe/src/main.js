@@ -2,10 +2,15 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-import Login from './Login'
+import Login from './components/Login'
 import router from './router'
+import routerLogin from './routerLogin'
+import VueResource from 'vue-resource';
 
 Vue.config.productionTip = false;
+Vue.use(VueResource);
+Vue.http.headers.common['Access-Control-Allow-Origin'] = '*';
+
 
 /* eslint-disable no-new */
 let app = new Vue({
@@ -17,7 +22,7 @@ let app = new Vue({
 
 let login = new Vue({
   el: '#login',
-  router,
+  routerLogin,
   template: '<Login/>',
   components: { Login }
 });
