@@ -45,13 +45,21 @@ app
     console.log(req.body.hash);
     console.log(req.body.tasks);
     tasks[req.body.hash] = req.body.tasks;
-
-
-    res.send({status:'saved'});
+    res.send({status: 'saved'});
     // console.log(JSON.parse(req.body));
 
 
   })
+  .post('/getTasks', function (req, res, bdy) {
+    console.log(req.body.hash);
+
+    // tasks[req.body.hash] = req.body.tasks;
+    res.send({tasks: tasks[req.body.hash]});
+    // console.log(JSON.parse(req.body));
+
+
+  })
+
   .post('/*', (req, res) => console.log(req, res));
 // .options('/login', function () {
 //   console.log("login-option");

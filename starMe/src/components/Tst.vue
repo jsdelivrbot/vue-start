@@ -9,7 +9,7 @@
     <br>
     <button v-on:click="(e) => addTask(currentText,currentHours)">add task</button>
     <button v-on:click="(e) => saveTasks()">save tasks</button>
-    <button v-on:click="(e) => addTask(currentText,currentHours)">get tasks</button>
+    <button v-on:click="(e) => getTasks()">get tasks</button>
     <br>
     <input type="text" v-model="currentText">
     <input type="text" v-model="currentHours">
@@ -65,9 +65,6 @@
           .then(response => {
             // get body
             console.log(response.body);
-            this.loginHash = response.body.hash ? response.body.hash : this.loginHash;
-      
-      
             // get status
             console.log(response.status);
             // get status text
@@ -83,9 +80,44 @@
           })
           .catch(error => console.warn(error));
   
+      },
+      getTasks: function () {
+        let options = {
+          method: 'post',
+          url: 'http://127.0.0.1:3000/getTasks',
+          headers: {
+            // TODO MAKE HASH GLOBAL or GET FROM LOGIN COMPONENT
+            auth: this.loginHash
+          },
+          body: {hash:'123'}
+        };
+    
+        this
+          .$http(options)
+          .then(response => {
+            // get body
+            console.log(response.body);
+            this.tasks[this.loginHash] = response.body.tasks;
+        
+        
+            // get status
+            console.log(response.status);
+            // get status text
+            console.log(response.statusText);
+            // get 'Expires' header
+            response.headers.get('Expires');
+            // get headers
+            console.log(response.headers);
+            // get body data
+            this.someData = response.body;
+          }, error => {
+            console.warn(error)
+          })
+          .catch(error => console.warn(error));
+    
       }
-      
-      
+  
+  
     }
   }
 </script>
