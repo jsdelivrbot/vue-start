@@ -97,7 +97,7 @@
           .then(response => {
             // get body
             console.log(response.body);
-            this.tasks[this.loginHash] = response.body.tasks;
+            this.tasks = response.body.tasks;
         
         
             // get status
