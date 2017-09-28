@@ -7,7 +7,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const md5 = require('md5');
 
-var logins = {}
+let logins = {};
+let tasks = {};
 
 app.use(cors());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -35,7 +36,18 @@ app
     // console.log(JSON.parse(req.body));
 
 
-    res.send({name:req.body.name, hash:md5(req.body.name + req.body.pass)});
+    res.send({name: req.body.name, hash: md5(req.body.name + req.body.pass)});
+    // console.log(JSON.parse(req.body));
+
+
+  })
+  .post('/saveTasks', function (req, res, bdy) {
+    console.log(req.body.hash);
+    console.log(req.body.tasks);
+    tasks[req.body.hash] = req.body.tasks;
+
+
+    res.send({status:'saved'});
     // console.log(JSON.parse(req.body));
 
 
