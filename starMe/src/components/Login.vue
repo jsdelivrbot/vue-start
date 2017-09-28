@@ -1,9 +1,16 @@
 <template>
   <div id="login">
     <!--<img src="./assets/logo.png">-->
-    <input type="text" v-model="loginName">
-    <input type="text" v-model="loginPassword">
-    <button v-on:click="e=>login(loginName, loginPassword)">LOGIN</button>
+    <div class="mini-login-form" v-show="!loginHash">
+      <input type="text" v-model="loginName">
+      <input type="text" v-model="loginPassword">
+      <button v-on:click="e=>login(loginName, loginPassword)">LOGIN</button>
+    </div>
+    
+    <div v-show="!!loginHash">
+      <span v-model="loginHash">{{loginHash}}</span>
+      <button v-on:click="e=>logout()">LOGOUT</button>
+    </div>
   
   </div>
 </template>
@@ -14,7 +21,8 @@
     data () {
       return {
         loginName: '',
-        loginPassword: ''
+        loginPassword: '',
+        loginHash: undefined
       }
     },
     methods: {
@@ -24,8 +32,9 @@
           method: 'post',
           url: 'http://127.0.0.1:3000/login',
           headers: {
-            Authorization: "Basic " + btoa(loginName + ":" + loginPassword)
-          }
+            auth: this.loginHash
+          },
+          body: {name: loginName, pass: loginPassword}
         };
         console.log(options);
         
@@ -33,19 +42,30 @@
         this
           .$http(options, {name: loginName, pass: loginPassword})
           .then(response => {
+            // get body
+            console.log(response.body);
+            this.loginHash = response.body.hash ? response.body.hash : this.loginHash;
+            
+            
             // get status
             console.log(response.status);
             // get status text
             console.log(response.statusText);
             // get 'Expires' header
             response.headers.get('Expires');
+            // get headers
+            console.log(response.headers);
             // get body data
             this.someData = response.body;
-          }, response => {
-            // error callback
+          }, error => {
+            console.warn(error)
           })
-          .catch(error => console.log(error));
+          .catch(error => console.warn(error));
+      },
+      logout: function () {
+        this.loginHash = undefined;
       }
+      
     }
     
   }
