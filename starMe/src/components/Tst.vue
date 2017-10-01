@@ -7,6 +7,7 @@
     </span>
     
     <br>
+    <span v-model="loginHash">{{loginHash}}</span>
     <button v-on:click="(e) => addTask(currentText,currentHours)">add task</button>
     <button v-on:click="(e) => saveTasks()">save tasks</button>
     <button v-on:click="(e) => getTasks()">get tasks</button>
@@ -15,11 +16,11 @@
     <input type="text" v-model="currentHours">
     
     <table>
-    <tr v-for="todo in tasks">
-      <td class="text">{{ todo.text }}</td>
-      <td class="hours">{{ todo.hours }}</td>
-    </tr>
-
+      <tr v-for="todo in tasks">
+        <td class="text">{{ todo.text }}</td>
+        <td class="hours">{{ todo.hours }}</td>
+      </tr>
+    
     </table>
   
   
@@ -29,6 +30,17 @@
 <script>
   export default {
 //    el:'#tst',
+    mounted: function () {
+      console.log(" - - - - mounted - - - - ");
+      let self = this;
+      this.$bus.$on('hash', function (data) {
+        self.loginHash = data;
+        console.log(data);
+        console.log(self.loginHash);
+      })
+      
+      
+    },
     name: 'tst',
     data () {
       return {
@@ -39,17 +51,24 @@
         msg: 'This is a test message',
         date: new Date().toLocaleString(),
         title: new Date(),
-        tasks: [{text: 'buy milk', hours: 5}, {text: 'buy cheese', hours: 5},]
+        tasks: [],
+//        tasks: [{text: 'buy milk', hours: 5}, {text: 'buy cheese', hours: 5},],
+        loginHash: '',
+        
       }
     },
     methods: {
-      reverseMessage: function () {
-        this.message = this.message.split('').reverse().join('')
-      },
+      
       addTask: function (text, hours) {
         this.tasks.push({text: text, hours: hours})
+        
+        
       },
       saveTasks: function () {
+        
+        console.log('this.loginHash');
+        console.log(this['loginHash']);
+        
         let options = {
           method: 'post',
           url: 'http://127.0.0.1:3000/saveTasks',
@@ -57,29 +76,20 @@
             // TODO MAKE HASH GLOBAL or GET FROM LOGIN COMPONENT
             auth: this.loginHash
           },
-          body: {hash:'123',tasks:this.tasks}
+          body: {hash: this.loginHash, tasks: this.tasks}
         };
-  
+        
+        
         this
           .$http(options)
-          .then(response => {
-            // get body
-            console.log(response.body);
-            // get status
-            console.log(response.status);
-            // get status text
-            console.log(response.statusText);
-            // get 'Expires' header
-            response.headers.get('Expires');
-            // get headers
-            console.log(response.headers);
-            // get body data
-            this.someData = response.body;
-          }, error => {
-            console.warn(error)
-          })
+          .then(
+            response => {
+            },
+            error => {
+              console.warn(error)
+            })
           .catch(error => console.warn(error));
-  
+        
       },
       getTasks: function () {
         let options = {
@@ -89,36 +99,23 @@
             // TODO MAKE HASH GLOBAL or GET FROM LOGIN COMPONENT
             auth: this.loginHash
           },
-          body: {hash:'123'}
+          body: {hash: this.loginHash}
         };
-    
+        
         this
           .$http(options)
           .then(response => {
-            // get body
-            console.log(response.body);
-            this.tasks = response.body.tasks;
-        
-        
-            // get status
-            console.log(response.status);
-            // get status text
-            console.log(response.statusText);
-            // get 'Expires' header
-            response.headers.get('Expires');
-            // get headers
-            console.log(response.headers);
-            // get body data
-            this.someData = response.body;
+            this.tasks = response.body.tasks || [];
           }, error => {
             console.warn(error)
           })
           .catch(error => console.warn(error));
-    
+        
       }
-  
-  
-    }
+      
+      
+    },
+    
   }
 </script>
 
@@ -145,11 +142,11 @@
     color: #42b983;
   }
   
-  td.text{
+  td.text {
     text-align: left;
   }
   
-  td.hours{
+  td.hours {
     text-align: right;
   }
 </style>

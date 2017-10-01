@@ -12,17 +12,38 @@ Vue.use(VueResource);
 Vue.http.headers.common['Access-Control-Allow-Origin'] = '*';
 
 
+Vue.use({
+  install(V) {
+    let bus = new Vue();
+    V.prototype.$bus = bus;
+    V.bus = bus;
+  }
+});
 /* eslint-disable no-new */
 let app = new Vue({
   el: '#app',
   router,
   template: '<App/>',
-  components: { App }
+  components: {App}
 });
 
 let login = new Vue({
   el: '#login',
   routerLogin,
   template: '<Login/>',
-  components: { Login }
+  components: {Login}
 });
+
+
+
+
+
+
+// const EventBus = new Vue();
+// Object.defineProperties(Vue.prototype, {
+//   $bus: {
+//     get: function () {
+//       return EventBus
+//     }
+//   }
+// });

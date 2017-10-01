@@ -36,34 +36,27 @@
           },
           body: {name: loginName, pass: loginPassword}
         };
-        console.log(options);
         
         
         this
           .$http(options, {name: loginName, pass: loginPassword})
-          .then(response => {
-            // get body
-            console.log(response.body);
-            this.loginHash = response.body.hash ? response.body.hash : this.loginHash;
-            
-            
-            // get status
-            console.log(response.status);
-            // get status text
-            console.log(response.statusText);
-            // get 'Expires' header
-            response.headers.get('Expires');
-            // get headers
-            console.log(response.headers);
-            // get body data
-            this.someData = response.body;
-          }, error => {
-            console.warn(error)
-          })
+          .then(
+            response => {
+              // get body
+              console.log(response.body);
+              this.loginHash = response.body.hash ? response.body.hash : this.loginHash;
+              this.$bus.$emit('hash',this.loginHash);
+              console.log('hash sent');
+  
+            },
+            error => {
+              console.warn(error)
+            })
           .catch(error => console.warn(error));
       },
       logout: function () {
         this.loginHash = undefined;
+        this.$bus.$emit('hash',this.loginHash);
       }
       
     }
