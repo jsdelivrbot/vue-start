@@ -1,11 +1,15 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import Vue from 'vue'
-import App from './App'
-import Login from './components/Login'
-import router from './router'
-import routerLogin from './routerLogin'
+import Vue from 'vue';
+import App from './App';
+import Login from './components/Login';
+import router from './router';
+import routerLogin from './routerLogin';
 import VueResource from 'vue-resource';
+import 'vue-material/dist/vue-material.css';
+var VueMaterial = require('vue-material');
+Vue.use(VueMaterial);
+
 
 Vue.config.productionTip = false;
 Vue.use(VueResource);
@@ -19,6 +23,31 @@ Vue.use({
     V.bus = bus;
   }
 });
+
+
+Vue.material.registerTheme({
+  default: {
+    primary: {
+      color: 'light-green',
+      hue: 700
+    },
+    accent: 'red'
+  },
+  teal: {
+    primary: 'blue',
+    accent: 'pink'
+  },
+  purple: {
+    primary: 'purple',
+    accent: 'orange'
+  },
+  red: {
+    primary: 'red',
+    accent: 'orange'
+  }
+});
+
+
 /* eslint-disable no-new */
 let app = new Vue({
   el: '#app',

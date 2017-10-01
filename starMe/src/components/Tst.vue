@@ -1,31 +1,66 @@
 <template>
   <div class="tst">
     <h1>{{ msg }}</h1>
-    <h2>{{ date }}</h2>
-    <span v-bind:title="title">
-          Hover your mouse over me for a few seconds to see my dynamically bound title!
-    </span>
-    
+    <h2>Started at {{ date }}</h2>
+    <h3 v-model="loginHash"> Current hash is
+      <pre>{{loginHash}}</pre>
+    </h3>
     <br>
-    <span v-model="loginHash">{{loginHash}}</span>
-    <button v-on:click="(e) => addTask(currentText,currentHours)">add task</button>
-    <button v-on:click="(e) => saveTasks()">save tasks</button>
-    <button v-on:click="(e) => getTasks()">get tasks</button>
+    <md-theme md-name="teal">
+      <div>
+        <md-button
+          v-on:click="(e) => addTask(currentText,currentHours)"
+          :disabled="!loginHash"
+          class="md-primary"
+        >
+          add task
+        </md-button>
+        <md-button v-on:click="(e) => saveTasks()" :disabled="!loginHash" class="md-primary">
+          save tasks
+        </md-button>
+        <md-button v-on:click="(e) => getTasks()" :disabled="!loginHash" class="md-primary">
+          get tasks
+        </md-button>
+      </div>
+    </md-theme>
+    
+    
     <br>
     <input type="text" v-model="currentText">
     <input type="text" v-model="currentHours">
+    <div>
+      
+      <md-table>
+        <md-table-header>
+          <md-table-row>
+            <md-table-head>index</md-table-head>
+            <md-table-head>text</md-table-head>
+            <md-table-head md-numeric>hours</md-table-head>
+            <md-table-head>remove</md-table-head>
+          </md-table-row>
+        </md-table-header>
+        
+        <md-table-body>
+          <md-table-row v-for="(todo, index) in tasks">
+            <md-table-cell md-numeric>{{index}}</md-table-cell>
+            
+            <md-table-cell v-for="cell in todo">{{cell}}</md-table-cell>
+            <md-table-cell>
+              <md-button class="md-icon-button md-raised md-accent" v-on:click="e=>removeTodo(index)">
+                X
+              </md-button>
+            </md-table-cell>
+          </md-table-row>
+        </md-table-body>
+      </md-table>
     
-    <table>
-      <tr v-for="todo in tasks">
-        <td class="text">{{ todo.text }}</td>
-        <td class="hours">{{ todo.hours }}</td>
-      </tr>
     
-    </table>
+    </div>
   
   
   </div>
 </template>
+
 
 <script>
   export default {
@@ -34,12 +69,16 @@
       console.log(" - - - - mounted - - - - ");
       let self = this;
       this.$bus.$on('hash', function (data) {
-        self.loginHash = data;
-        console.log(data);
-        console.log(self.loginHash);
+        if (data && data !== '') {
+          self.loginHash = data;
+          self.getTasks();
+        }
+        else {
+          self.saveTasks();
+          self.loginHash = '';
+          self.tasks = [];
+        }
       })
-      
-      
     },
     name: 'tst',
     data () {
@@ -48,11 +87,9 @@
         currentHours: 100500,
         currentText: 'Learn VUE',
         
-        msg: 'This is a test message',
+        msg: 'This is a test TODO list',
         date: new Date().toLocaleString(),
-        title: new Date(),
         tasks: [],
-//        tasks: [{text: 'buy milk', hours: 5}, {text: 'buy cheese', hours: 5},],
         loginHash: '',
         
       }
