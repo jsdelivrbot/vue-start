@@ -35,7 +35,8 @@ Vue.material.registerTheme({
   },
   teal: {
     primary: 'blue',
-    accent: 'pink'
+    accent: 'pink',
+    link:'green'
   },
   purple: {
     primary: 'purple',

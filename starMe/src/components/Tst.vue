@@ -28,6 +28,7 @@
     <br>
     <input type="text" v-model="currentText">
     <input type="text" v-model="currentHours">
+    <input type="text" v-model="currentUrl">
     <div>
       
       <md-table>
@@ -96,9 +97,17 @@
     },
     methods: {
       
+      removeTodo: function (index) {
+        this.tasks.splice(index,1);
+//        console.log(JSON.stringify(this.tasks.splice(index)) + ' removed ' + index);
+        console.log(index, this.tasks[index]);
+        this.saveTasks();
+      },
+      
       addTask: function (text, hours) {
-        this.tasks.push({text: text, hours: hours})
         
+        this.tasks.push({text: text, hours: hours});
+        this.tasks = this.tasks.sort((el1, el2) => el1.hours - el2.hours);
         
       },
       saveTasks: function () {
@@ -143,6 +152,7 @@
           .$http(options)
           .then(response => {
             this.tasks = response.body.tasks || [];
+            this.tasks = this.tasks.sort((el1, el2) => el1.hours - el2.hours);
           }, error => {
             console.warn(error)
           })

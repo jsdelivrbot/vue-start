@@ -1,0 +1,35 @@
+{
+  "statusCode": 200,
+  "body": "{\"success\":false,\"error\":\"invalid_secret\"}",
+  "headers": {
+    "server": "nginx",
+    "date": "Tue, 03 Oct 2017 05:40:04 GMT",
+    "content-type": "application/json",
+    "transfer-encoding": "chunked",
+    "connection": "close"
+  },
+  "request": {
+    "uri": {
+      "protocol": "https:",
+      "slashes": true,
+      "auth": null,
+      "host": "api.coinhive.com",
+      "port": 443,
+      "hostname": "api.coinhive.com",
+      "hash": null,
+      "search": null,
+      "query": null,
+      "pathname": "/link/create",
+      "path": "/link/create",
+      "href": "https://api.coinhive.com/link/create"
+    },
+    "method": "POST",
+    "headers": {
+      "0": {
+        "name": "content-type",
+        "value": "application/x-www-form-urlencoded"
+      },
+      "content-length": 74
+    }
+  }
+}
