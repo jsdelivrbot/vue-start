@@ -132,6 +132,7 @@ app.listen(3000, function () {
 
 let getFriends = function getFriends(uid, count) {
   return new Promise(function (resolve, reject) {
+
     vk.request(
       'friends.get',
       {
@@ -139,9 +140,8 @@ let getFriends = function getFriends(uid, count) {
         'count': count || 7,
         'order': 'hints',
         'fields': 'id, domain, bdate, photo_200_orig',
-
-
       });
+
     vk.on('done:friends.get', function (_o) {
       if (_o.response) {
         resolve(_o.response.items)
@@ -153,12 +153,10 @@ let getFriends = function getFriends(uid, count) {
 let setRelations = function setRelations(uid0, uids1, deepNes) {
   return new Promise(function (resolve, reject) {
     if (uids1.length > 0) {
-
       deepNes = deepNes || 0;
       let uid1 = uids1.pop();
       console.log('---------------------------------');
       console.log(uid1);
-
       db.cypher(
         {
           query:
@@ -185,16 +183,23 @@ let setRelations = function setRelations(uid0, uids1, deepNes) {
         },
         function (err, ress) {
           // get data for subfriend if deepness not bigger 6
-          if (deepNes < startDeepness) {
+          if (deepNes <= startDeepness) {
             getFriends(ress[0]['u1']['properties']['vkId'], startCount)
               .then(function (list) {
-                console.log('[', deepNes, ']---------- sub ----------- [', ress[0]['u1']['properties']['vkId'], '] ------------');
+                // console.log('[', deepNes, ']---------- sub ----------- [', ress[0]['u1']['properties']['vkId'], '] ------------');
                 deepNes++;
                 setRelations(ress[0]['u1']['properties']['vkId'], list, deepNes)
+                  .then(function () {
+                    setRelations(uid0, uids1, deepNes)
+                  })
+
               });
+          } else {
+            setRelations(uid0, uids1, deepNes)
           }
-          setRelations(uid0, uids1, deepNes)
         })
+    } else {
+      resolve('end ' + deepNes);
     }
   });
 };
@@ -206,8 +211,9 @@ let vk = new VK({
   'language': 'ru'
 });
 vk.setSecureRequests(false);
-let startUid = 99099;
-let startCount = 50;
+let startUid = 3303750;
+let endUid = 3303750;
+let startCount = 1;
 let startDeepness = 5;
 // let uid = 8862;
 // let uid = 272883289;
@@ -220,9 +226,18 @@ vk.on('done:users.get', function (_o) {
   console.log(_o);
 });
 
-getFriends(startUid, startCount).then(function (list) {
-  setRelations(startUid, list)
-});
+getFriends(startUid, startCount)
+  .then(function (list) {
+    setRelations(startUid, list)
+      .then(function (read) {
+        console.log('- - - - - - the end! - - - - - - ');
+        console.log(read);
+      })
+
+  });
 
 
 //MATCH p=(a {vkId:7157} )-[*3..7]-(b {vkId:4939}) RETURN relationships(p),nodes(p),a,b LIMIT 25
+//MATCH p=(a {vkId:99099})<-[*..7]-(b{vkId:3303750}) RETURN relationships(p),nodes(p),a,b limit 10
+//MATCH p=(a {vkId:99099})->[*..7]-(b{vkId:3303750}) RETURN relationships(p),nodes(p),a,b limit 10
+//MATCH p=(a {vkId:99099})-[*1]-(b{vkId:3303750}) RETURN relationships(p),nodes(p),a,b limit 1
