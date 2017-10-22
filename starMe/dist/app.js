@@ -8,6 +8,10 @@ const bodyParser = require('body-parser');
 const md5 = require('md5');
 const request = require('request');
 const formurlencoded = require('form-urlencoded');
+const VK = require('vksdk');
+const neo4j = require('neo4j');
+let db = new neo4j.GraphDatabase('http://neo4j:q100500q@localhost:7474');
+
 
 let logins = {};
 let tasks = {};
@@ -21,7 +25,8 @@ app.use(bodyParser.json());
 
 app
   .get('/', function (req, res) {
-    res.send('Hello World!')
+    // res.send('Hello World!');
+    res.sendFile('index.html', {root: __dirname})
   })
   .post('/save', function (req, res, bdy) {
     console.log("save");
@@ -102,8 +107,18 @@ app
   .post('/getUrls', function (req, res, bdy) {
     res.send({urls: urls[req.body.hash]});
   })
+  .get('/favicon.ico', (req, res) => {
+    console.log('ico');
 
-  .post('/*', (req, res) => console.log(req, res));
+    res.sendFile('./public/cthulhu0_0.jpg', {root: __dirname})
+  })
+  .post('/*', (req, res) => {
+    console.log(req, res)
+  })
+  .get('/*', (req, res) => {
+    console.log(req.url);
+    res.sendFile(req.url, {root: __dirname})
+  });
 // .options('/login', function () {
 //   console.log("login-option");
 //   res.send('options ');
@@ -112,4 +127,99 @@ app
 
 app.listen(3000, function () {
   console.log('Example app listening on port 3000!')
+});
+
+
+let getFriends = function getFriends(uid, count) {
+  return new Promise(function (resolve, reject) {
+    vk.request(
+      'friends.get',
+      {
+        'user_id': uid,
+        'count': count || 7,
+        'order': 'hints',
+        'fields': 'id, domain, bdate, photo_200_orig',
+
+
+      });
+    vk.on('done:friends.get', function (_o) {
+      if (_o.response) {
+        resolve(_o.response.items)
+      }
+    });
+  });
+};
+
+let setRelations = function setRelations(uid0, uids1, deepNes) {
+  return new Promise(function (resolve, reject) {
+    if (uids1.length > 0) {
+
+      deepNes = deepNes || 0;
+      let uid1 = uids1.pop();
+      console.log('---------------------------------');
+      console.log(uid1);
+
+      db.cypher(
+        {
+          query:
+          'MERGE (u0:Person { vkId: {vkId0} })' +
+          'ON MATCH SET u0.found = TRUE ' +
+          'ON CREATE SET u0.created = TRUE ' +
+          'ON CREATE SET u0.found = FALSE ' +
+
+          'MERGE (u1:Person { vkId: {vkId1} })' +
+          'ON MATCH SET u1.found = TRUE ' +
+          'ON CREATE SET u1.created = TRUE ' +
+          'SET u1.domain = {vkId1Domain} ' +
+
+          'MERGE (u0)-[r:Friend]-(u1)' +
+
+          'RETURN u1',
+          // query: 'MERGE (u0:Person { vkId: {vkId0} }),(u1:Person { vkId: {vkId1} })  MERGE (u0)-[r:Friend]-(u1)',
+          params: {
+            vkId0: uid0,
+            vkId1: uid1.id,
+            vkId1Domain: uid1.domain,
+
+          }
+        },
+        function (err, ress) {
+          // get data for subfriend if deepness not bigger 6
+          if (deepNes < startDeepness) {
+            getFriends(ress[0]['u1']['properties']['vkId'], startCount)
+              .then(function (list) {
+                console.log('[', deepNes, ']---------- sub ----------- [', ress[0]['u1']['properties']['vkId'], '] ------------');
+                deepNes++;
+                setRelations(ress[0]['u1']['properties']['vkId'], list, deepNes)
+              });
+          }
+          setRelations(uid0, uids1, deepNes)
+        })
+    }
+  });
+};
+
+
+let vk = new VK({
+  'appId': 5227310,
+  'appSecret': 'W1gKOVIOX0ssJt8OZRHN',
+  'language': 'ru'
+});
+vk.setSecureRequests(false);
+let startUid = 9;
+let startCount = 50;
+let startDeepness = 6;
+// let uid = 8862;
+// let uid = 272883289;
+// let uid = 272950899;
+// let uid = 8862;
+
+
+vk.request('users.get', {'user_id': startUid});
+vk.on('done:users.get', function (_o) {
+  console.log(_o);
+});
+
+getFriends(startUid, startCount).then(function (list) {
+  setRelations(startUid, list)
 });

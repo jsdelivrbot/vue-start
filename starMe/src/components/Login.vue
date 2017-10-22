@@ -63,7 +63,7 @@
         console.log("login", loginName, loginPassword);
         let options = {
           method: 'post',
-          url: 'http://127.0.0.1:3000/login',
+          url: '/login',
           headers: {
             auth: this.loginHash
           },
