@@ -183,24 +183,33 @@ let setRelations = function setRelations(uid0, uids1, deepNes) {
         },
         function (err, ress) {
           // get data for subfriend if deepness not bigger 6
+
+
+          // get friends for result
           if (deepNes <= startDeepness) {
             getFriends(ress[0]['u1']['properties']['vkId'], startCount)
               .then(function (list) {
-                // console.log('[', deepNes, ']---------- sub ----------- [', ress[0]['u1']['properties']['vkId'], '] ------------');
-                deepNes++;
-                setRelations(ress[0]['u1']['properties']['vkId'], list, deepNes)
+                console.log(list);
+                globalList.push({uid0: uid1, uids1: list});
+                console.log(globalList);
+                setRelations(uid0, uids1, deepNes)
                   .then(function () {
-                    setRelations(uid0, uids1, deepNes)
+                    console.log('!!!!!!!!!!-------------!!!!!!!!!!!');
+                    deepNes++;
                   })
-
               });
           } else {
             setRelations(uid0, uids1, deepNes)
           }
+
+
+          // go to next result
+
         })
     } else {
-      resolve('end ' + deepNes);
+      resolve();
     }
+
   });
 };
 
@@ -213,8 +222,9 @@ let vk = new VK({
 vk.setSecureRequests(false);
 let startUid = 3303750;
 let endUid = 3303750;
-let startCount = 1;
+let startCount = 7;
 let startDeepness = 5;
+let globalList = [];
 // let uid = 8862;
 // let uid = 272883289;
 // let uid = 272950899;
@@ -228,10 +238,10 @@ vk.on('done:users.get', function (_o) {
 
 getFriends(startUid, startCount)
   .then(function (list) {
+
     setRelations(startUid, list)
-      .then(function (read) {
-        console.log('- - - - - - the end! - - - - - - ');
-        console.log(read);
+      .then(function (data) {
+        console.log('-------------!!!!!!!!!!!!!!!!!!!!----------')
       })
 
   });
