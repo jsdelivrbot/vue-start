@@ -172,7 +172,7 @@ let setRelations = function setRelations(uid0, uids1, deepNes) {
           'ON CREATE SET u1.created = TRUE ' +
           'SET u1.domain = {vkId1Domain} ' +
 
-          'MERGE (u0)-[r:Friend]-(u1)' +
+          'MERGE (u0)-[r:Friend]->(u1)' +
 
           'RETURN u1',
           // query: 'MERGE (u0:Person { vkId: {vkId0} }),(u1:Person { vkId: {vkId1} })  MERGE (u0)-[r:Friend]-(u1)',
@@ -206,9 +206,9 @@ let vk = new VK({
   'language': 'ru'
 });
 vk.setSecureRequests(false);
-let startUid = 9;
+let startUid = 99099;
 let startCount = 50;
-let startDeepness = 6;
+let startDeepness = 5;
 // let uid = 8862;
 // let uid = 272883289;
 // let uid = 272950899;
@@ -223,3 +223,6 @@ vk.on('done:users.get', function (_o) {
 getFriends(startUid, startCount).then(function (list) {
   setRelations(startUid, list)
 });
+
+
+//MATCH p=(a {vkId:7157} )-[*3..7]-(b {vkId:4939}) RETURN relationships(p),nodes(p),a,b LIMIT 25
