@@ -10,18 +10,16 @@ const request = require('request');
 const formurlencoded = require('form-urlencoded');
 const VK = require('vksdk');
 const neo4j = require('neo4j');
+const cron = require('node-cron');
 let db = new neo4j.GraphDatabase('http://neo4j:q100500q@localhost:7474');
-
 
 let logins = {};
 let tasks = {};
 let urls = {};
 
-
 app.use(cors());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-
 
 app
   .get('/', function (req, res) {
@@ -125,91 +123,109 @@ app
 //   console.log(JSON.parse(req.body));
 // });
 
-app.listen(3000, function () {
+app.listen(3000, () => {
   console.log('Example app listening on port 3000!')
 });
 
 
-let getFriends = function getFriends(uid, count) {
-  return new Promise(function (resolve, reject) {
+let getFriends = function getFriends(uid, count, deepness) {
 
-    vk.request(
-      'friends.get',
-      {
-        'user_id': uid,
-        'count': count || 7,
-        'order': 'hints',
-        'fields': 'id, domain, bdate, photo_200_orig',
-      });
-
-    vk.on('done:friends.get', function (_o) {
-      if (_o.response) {
-        resolve(_o.response.items)
+  globalChecked = globalChecked.filter((v, i, a) => a.indexOf(v) === i);
+  deepness = deepness || 0;
+  if (deepness > startDeepness) {
+    return
+  }
+  if (globalChecked.indexOf(uid) >= 0) {
+    console.log(globalChecked.indexOf(uid), uid, globalChecked.length);
+    return
+  }
+  let myEvent = uid;
+  vk.request(
+    'friends.get',
+    {
+      'order': 'random',
+      // 'order':'random',
+      'user_id': uid,
+      'count': count,
+      'fields':
+      'id, ' +
+      'domain, ' +
+      'bdate, ' +
+      'photo_200_orig',
+    },
+    myEvent);
+  vk.on(
+    myEvent,
+    function (_o) {
+      if (_o.response && _o.response.items) {
+        console.log(
+          'Start Event - [',
+          myEvent, ']', ' - ',
+          JSON.stringify(
+            _o.response.items
+              .filter(item =>
+                globalChecked.indexOf(item.id) < 0)
+              .map(item => item.id)),
+          ' - deep [',
+          deepness,
+          ']');
+        _o.response.items
+          .filter(item =>
+            globalChecked.indexOf(item.id) < 0)
+          .map(item => {
+            globalList.push({id0: myEvent, id1: item});
+            globalList = globalList.filter((v, i, a) => a.indexOf(v) === i);
+          });
+        _o.response.items.map(item => {
+          getFriends(item.id, startCount, deepness + 1);
+        });
       }
     });
-  });
+
 };
 
-let setRelations = function setRelations(uid0, uids1, deepNes) {
+
+let setRelation = function () {
   return new Promise(function (resolve, reject) {
-    if (uids1.length > 0) {
-      deepNes = deepNes || 0;
-      let uid1 = uids1.pop();
-      console.log('---------------------------------');
-      console.log(uid1);
-      db.cypher(
-        {
-          query:
-          'MERGE (u0:Person { vkId: {vkId0} })' +
-          'ON MATCH SET u0.found = TRUE ' +
-          'ON CREATE SET u0.created = TRUE ' +
-          'ON CREATE SET u0.found = FALSE ' +
-
-          'MERGE (u1:Person { vkId: {vkId1} })' +
-          'ON MATCH SET u1.found = TRUE ' +
-          'ON CREATE SET u1.created = TRUE ' +
-          'SET u1.domain = {vkId1Domain} ' +
-
-          'MERGE (u0)-[r:Friend]->(u1)' +
-
-          'RETURN u1',
-          // query: 'MERGE (u0:Person { vkId: {vkId0} }),(u1:Person { vkId: {vkId1} })  MERGE (u0)-[r:Friend]-(u1)',
-          params: {
-            vkId0: uid0,
-            vkId1: uid1.id,
-            vkId1Domain: uid1.domain,
-
-          }
-        },
-        function (err, ress) {
-          // get data for subfriend if deepness not bigger 6
-
-
-          // get friends for result
-          if (deepNes <= startDeepness) {
-            getFriends(ress[0]['u1']['properties']['vkId'], startCount)
-              .then(function (list) {
-                console.log(list);
-                globalList.push({uid0: uid1, uids1: list});
-                console.log(globalList);
-                setRelations(uid0, uids1, deepNes)
-                  .then(function () {
-                    console.log('!!!!!!!!!!-------------!!!!!!!!!!!');
-                    deepNes++;
-                  })
-              });
-          } else {
-            setRelations(uid0, uids1, deepNes)
-          }
-
-
-          // go to next result
-
-        })
-    } else {
-      resolve();
+    let data = globalList.pop();
+    if (!data) {
+      return
     }
+    let uid0 = data.id0;
+    let uid1 = data.id1;
 
+    db.cypher(
+      {
+        query:
+        'MERGE (u0:Person { vkId: {vkId0} })' +
+        'ON MATCH SET u0.found = TRUE ' +
+        'ON CREATE SET u0.created = TRUE ' +
+        'ON CREATE SET u0.found = FALSE ' +
+
+        'MERGE (u1:Person { vkId: {vkId1} })' +
+        'ON MATCH SET u1.found = TRUE ' +
+        'ON CREATE SET u1.created = TRUE ' +
+        'SET u1.domain = {vkId1Domain} ' +
+
+        'MERGE (u0)-[r:Friend]->(u1)' +
+
+        'RETURN u1, u0, r',
+        // query: 'MERGE (u0:Person { vkId: {vkId0} }),(u1:Person { vkId: {vkId1} })  MERGE (u0)-[r:Friend]-(u1)',
+        params: {
+          vkId0: uid0,
+          vkId1: uid1.id,
+          vkId1Domain: uid1.domain,
+
+        }
+      },
+      function (err, res) {
+        globalChecked.push(uid0);
+        globalChecked.push(uid1.id);
+        // console.log('ADDING RELATION');
+        // console.log('ERROR: ', err);
+        // console.log('RESLT: ', JSON.stringify(res));
+        setRelation();
+      });
   });
 };
 
@@ -220,34 +236,35 @@ let vk = new VK({
   'language': 'ru'
 });
 vk.setSecureRequests(false);
-let startUid = 3303750;
-let endUid = 3303750;
-let startCount = 7;
-let startDeepness = 5;
+
+let startCount = 100;
+let startDeepness = 4;
 let globalList = [];
-// let uid = 8862;
-// let uid = 272883289;
-// let uid = 272950899;
-// let uid = 8862;
+let globalFriends = [4761919,5217756,4049220];
+let globalChecked = [];
 
 
-vk.request('users.get', {'user_id': startUid});
-vk.on('done:users.get', function (_o) {
-  console.log(_o);
-});
+// getFriends(startUid, startCount, 0);
 
-getFriends(startUid, startCount)
-  .then(function (list) {
-
-    setRelations(startUid, list)
-      .then(function (data) {
-        console.log('-------------!!!!!!!!!!!!!!!!!!!!----------')
-      })
-
+cron.schedule(
+  '*/10 * * * * *',
+  () => {
+    setRelation();
   });
+
+getFriends(globalFriends[0], startCount, 0);
+getFriends(globalFriends[1], startCount, 0);
+getFriends(globalFriends[3], startCount, 0);
 
 
 //MATCH p=(a {vkId:7157} )-[*3..7]-(b {vkId:4939}) RETURN relationships(p),nodes(p),a,b LIMIT 25
 //MATCH p=(a {vkId:99099})<-[*..7]-(b{vkId:3303750}) RETURN relationships(p),nodes(p),a,b limit 10
 //MATCH p=(a {vkId:99099})->[*..7]-(b{vkId:3303750}) RETURN relationships(p),nodes(p),a,b limit 10
-//MATCH p=(a {vkId:99099})-[*1]-(b{vkId:3303750}) RETURN relationships(p),nodes(p),a,b limit 1
+//MATCH p=shortestPath((a {vkId:108108})-[*1]-(b{vkId:107107})) RETURN relationships(p),nodes(p),a,b limit 1
+//MATCH p=shortestPath((a {vkId:108108})-[*..7]-(b{vkId:107107})) RETURN relationships(p),nodes(p),a,b
+//MATCH p=shortestPath((a {vkId:108108})-[*..7]-(b{vkId:107107})) RETURN relationships(p),nodes(p),a,b
+//MATCH p=shortestPath((a {vkId:103})-[*..7]-(b{vkId:104})) RETURN relationships(p),nodes(p),a,b
+//MATCH p=(a)-[*7]-(b) RETURN relationships(p),nodes(p),a,b limit 5
+//MATCH (a {vkId:103}),(b{vkId:104}) RETURN a,b
+// MATCH (n) DETACH DELETE n
+//MATCH p=shortestPath((a {vkId:4761919})-[*..25]-(b{vkId:5217756})) RETURN relationships(p),nodes(p)
