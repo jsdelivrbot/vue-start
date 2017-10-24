@@ -117,16 +117,13 @@ app
     console.log(req.url);
     res.sendFile(req.url, {root: __dirname})
   });
-// .options('/login', function () {
-//   console.log("login-option");
-//   res.send('options ');
-//   console.log(JSON.parse(req.body));
-// });
 
 app.listen(3000, () => {
   console.log('Example app listening on port 3000!')
 });
 
+
+//TODO users.getFollowers
 
 let getFriends = function getFriends(uid, count, deepness) {
   globalChecked = globalChecked.filter((v, i, a) => a.indexOf(v) === i);
@@ -158,25 +155,31 @@ let getFriends = function getFriends(uid, count, deepness) {
     myEvent,
     function (_o) {
       if (_o.response && _o.response.items) {
-
         let itemsToScan = _o.response.items.filter(item => globalChecked.indexOf(item.id) < 0);
-
         if (itemsToScan.length < 1) {
           return
         }
-
-        console.log(
-          'Start Event [', myEvent, ']', ' deep [', deepness, ']', ' items [', itemsToScan.length, ']');
-
+        // console.log('Start Event [', myEvent, ']', ' deep [', deepness, ']', ' items [', itemsToScan.length, ']');
         itemsToScan.map(item => {
           globalList.push({id0: myEvent, id1: item});
           globalList = globalList.filter((v, i, a) => a.indexOf(v) === i);
         });
-
         itemsToScan.map(item => {
           globalToScan.push({id: item.id, startCount: startCount, deepness: deepness + 1});
         });
+      }else{
+        console.log(myEvent,':',_o.error.error_msg);
+
+        db.cypher({
+          query:'MATCH (u0:Person { vkId: {vkId0} }) SET u0:Deactivated',
+          params: {
+            vkId0:myEvent
+          }
+        },function (err, res) {
+
+        })
       }
+
     });
 
 };
@@ -191,20 +194,28 @@ let setRelation = function () {
     let uid0 = data.id0;
     let uid1 = data.id1;
 
+    // console.log(JSON.stringify(uid1));
+
     db.cypher(
       {
         query:
         'MERGE (u0:Person { vkId: {vkId0} })' +
-        'ON MATCH SET u0.found = TRUE ' +
-        'ON CREATE SET u0.created = TRUE ' +
-        'ON CREATE SET u0.found = FALSE ' +
+        // 'ON MATCH SET u0.found = TRUE ' +
+        // 'ON CREATE SET u0.created = TRUE ' +
+        // 'ON CREATE SET u0.found = FALSE ' +
 
         'MERGE (u1:Person { vkId: {vkId1} })' +
         'ON MATCH SET u1.found = TRUE ' +
         'ON CREATE SET u1.created = TRUE ' +
-        'SET u1.domain = {vkId1Domain} ' +
 
-        'MERGE (u0)-[r:Friend]->(u1)' +
+
+        // 'MERGE (u0)<-[r:Friend]-(u1)' +
+        // 'MERGE (u0)-[r:Friend]->(u1)' +
+        'MERGE (u0)-[r:Friend]-(u1)' +
+
+        'SET u1.vkDomain = {vkId1Domain} ' +
+        'SET u1.firstName = {vkId1FirstName} ' +
+        'SET u1.lastName = {vkId1LastName} ' +
 
         'RETURN u1, u0, r',
         // query: 'MERGE (u0:Person { vkId: {vkId0} }),(u1:Person { vkId: {vkId1} })  MERGE (u0)-[r:Friend]-(u1)',
@@ -212,6 +223,9 @@ let setRelation = function () {
           vkId0: uid0,
           vkId1: uid1.id,
           vkId1Domain: uid1.domain,
+          vkId1FirstName: uid1.first_name,
+          vkId1LastName: uid1.last_name,
+          // relation:'Friend'
 
         }
       },
@@ -235,10 +249,24 @@ let vk = new VK({
 vk.setSecureRequests(false);
 
 let startCount = 100;
-let startDeepness = 5;
+let startDeepness = 3;
 let globalList = [];
 // let globalFriends = [1047350, 10616624, 441575607, 136352849, 1097538, 136352849, 8219971];
-let globalFriends = [1047351];
+// let globalFriends = [15970041,5319461,208576695,227630028,271128644];
+let globalFriends = [15970041,5319461,8500351,208576695,227630028,15970041,5319461,271128644];
+//https://vk.com/albums148943263
+//https://vk.com/doc243240023_452920817
+//https://vk.com/albums163948203
+//https://vk.com/albums138701665
+//https://vk.com/albums216621231
+//https://vk.com/albums3326710
+//https://vk.com/albums234280163
+//https://vk.com/doc52809064_452376811
+//https://vk.com/doc170557796_452653556
+//https://vk.com/doc446870248_452580223
+//https://vk.com/albums214523910
+//https://vk.com/albums162299630
+
 
 // TODO array to file / from file
 let globalChecked = [];
@@ -261,7 +289,7 @@ cron.schedule(
       return
     }
     getFriends(scanObj.id, scanObj.startCount, scanObj.deepness);
-    console.log('Items to scan :', globalToScan.length, ' now scanning :', JSON.stringify(scanObj), ' scanned :', globalChecked.length);
+    console.log('Items to scan :', globalToScan.length, 'Full count [', Math.pow(startCount, startDeepness) - globalChecked.length, ']', ' now scanning :', JSON.stringify(scanObj), ' scanned :', globalChecked.length);
   });
 
 
