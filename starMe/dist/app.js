@@ -129,7 +129,6 @@ app.listen(3000, () => {
 
 
 let getFriends = function getFriends(uid, count, deepness) {
-
   globalChecked = globalChecked.filter((v, i, a) => a.indexOf(v) === i);
   deepness = deepness || 0;
   if (deepness > startDeepness) {
@@ -143,7 +142,8 @@ let getFriends = function getFriends(uid, count, deepness) {
   vk.request(
     'friends.get',
     {
-      'order': 'random',
+      // 'order': 'hint',
+      'order': 'mobile',
       // 'order':'random',
       'user_id': uid,
       'count': count,
@@ -158,26 +158,23 @@ let getFriends = function getFriends(uid, count, deepness) {
     myEvent,
     function (_o) {
       if (_o.response && _o.response.items) {
+
+        let itemsToScan = _o.response.items.filter(item => globalChecked.indexOf(item.id) < 0);
+
+        if (itemsToScan.length < 1) {
+          return
+        }
+
         console.log(
-          'Start Event - [',
-          myEvent, ']', ' - ',
-          JSON.stringify(
-            _o.response.items
-              .filter(item =>
-                globalChecked.indexOf(item.id) < 0)
-              .map(item => item.id)),
-          ' - deep [',
-          deepness,
-          ']');
-        _o.response.items
-          .filter(item =>
-            globalChecked.indexOf(item.id) < 0)
-          .map(item => {
-            globalList.push({id0: myEvent, id1: item});
-            globalList = globalList.filter((v, i, a) => a.indexOf(v) === i);
-          });
-        _o.response.items.map(item => {
-          getFriends(item.id, startCount, deepness + 1);
+          'Start Event [', myEvent, ']', ' deep [', deepness, ']', ' items [', itemsToScan.length, ']');
+
+        itemsToScan.map(item => {
+          globalList.push({id0: myEvent, id1: item});
+          globalList = globalList.filter((v, i, a) => a.indexOf(v) === i);
+        });
+
+        itemsToScan.map(item => {
+          globalToScan.push({id: item.id, startCount: startCount, deepness: deepness + 1});
         });
       }
     });
@@ -238,23 +235,39 @@ let vk = new VK({
 vk.setSecureRequests(false);
 
 let startCount = 100;
-let startDeepness = 4;
+let startDeepness = 5;
 let globalList = [];
-let globalFriends = [4761919,5217756,4049220];
-let globalChecked = [];
+// let globalFriends = [1047350, 10616624, 441575607, 136352849, 1097538, 136352849, 8219971];
+let globalFriends = [1047351];
 
+// TODO array to file / from file
+let globalChecked = [];
+let globalToScan = [];
 
 // getFriends(startUid, startCount, 0);
 
 cron.schedule(
-  '*/10 * * * * *',
+  '*/5 * * * * *',
   () => {
     setRelation();
   });
+cron.schedule(
+  '*/1 * * * * *',
+  () => {
+    globalToScan = globalToScan.filter((v, i, a) => a.indexOf(v) === i);
+    globalToScan = globalToScan.filter((v) => globalChecked.indexOf(v.id) < 0);
+    let scanObj = globalToScan.pop();
+    if (!scanObj) {
+      return
+    }
+    getFriends(scanObj.id, scanObj.startCount, scanObj.deepness);
+    console.log('Items to scan :', globalToScan.length, ' now scanning :', JSON.stringify(scanObj), ' scanned :', globalChecked.length);
+  });
 
-getFriends(globalFriends[0], startCount, 0);
-getFriends(globalFriends[1], startCount, 0);
-getFriends(globalFriends[3], startCount, 0);
+
+globalFriends.map(function (item) {
+  getFriends(item, startCount, 0);
+});
 
 
 //MATCH p=(a {vkId:7157} )-[*3..7]-(b {vkId:4939}) RETURN relationships(p),nodes(p),a,b LIMIT 25
