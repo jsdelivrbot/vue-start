@@ -123,7 +123,19 @@ app.listen(3000, () => {
 });
 
 
+
+let vk = new VK({
+  'appId': 5227310,
+  'appSecret': 'W1gKOVIOX0ssJt8OZRHN',
+  'language': 'ru'
+});
+vk.setSecureRequests(false);
+
+
 //TODO users.getFollowers
+//TODO add city
+//TODO add dob
+//TODO
 
 let getFriends = function getFriends(uid, count, deepness) {
   globalChecked = globalChecked.filter((v, i, a) => a.indexOf(v) === i);
@@ -183,9 +195,7 @@ let getFriends = function getFriends(uid, count, deepness) {
     });
 
 };
-
-
-let setRelation = function () {
+let setRelationFriend = function () {
   return new Promise(function (resolve, reject) {
     let data = globalList.pop();
     if (!data) {
@@ -235,25 +245,22 @@ let setRelation = function () {
         // console.log('ADDING RELATION');
         // console.log('ERROR: ', err);
         // console.log('RESLT: ', JSON.stringify(res));
-        setRelation();
+        setRelationFriend();
       });
   });
 };
 
 
-let vk = new VK({
-  'appId': 5227310,
-  'appSecret': 'W1gKOVIOX0ssJt8OZRHN',
-  'language': 'ru'
-});
-vk.setSecureRequests(false);
+
+
 
 let startCount = 100;
 let startDeepness = 3;
 let globalList = [];
 // let globalFriends = [1047350, 10616624, 441575607, 136352849, 1097538, 136352849, 8219971];
 // let globalFriends = [15970041,5319461,208576695,227630028,271128644];
-let globalFriends = [15970041,5319461,8500351,208576695,227630028,15970041,5319461,271128644];
+let globalFriends = [6526905,7304475];
+// let globalFriends = [15970041,5319461,8500351,208576695,227630028,15970041,5319461,271128644];
 //https://vk.com/albums148943263
 //https://vk.com/doc243240023_452920817
 //https://vk.com/albums163948203
@@ -277,7 +284,7 @@ let globalToScan = [];
 cron.schedule(
   '*/5 * * * * *',
   () => {
-    setRelation();
+    setRelationFriend();
   });
 cron.schedule(
   '*/1 * * * * *',
@@ -289,7 +296,7 @@ cron.schedule(
       return
     }
     getFriends(scanObj.id, scanObj.startCount, scanObj.deepness);
-    console.log('Items to scan :', globalToScan.length, 'Full count [', Math.pow(startCount, startDeepness) - globalChecked.length, ']', ' now scanning :', JSON.stringify(scanObj), ' scanned :', globalChecked.length);
+    console.log('Items to scan :', globalToScan.length, 'Full count [', (Math.pow(startCount, startDeepness+1))*globalFriends.length - globalChecked.length, ']', ' now scanning :', JSON.stringify(scanObj), ' scanned :', globalChecked.length);
   });
 
 
@@ -309,3 +316,14 @@ globalFriends.map(function (item) {
 //MATCH (a {vkId:103}),(b{vkId:104}) RETURN a,b
 // MATCH (n) DETACH DELETE n
 //MATCH p=shortestPath((a {vkId:4761919})-[*..25]-(b{vkId:5217756})) RETURN relationships(p),nodes(p)
+//MATCH p=(a)-[*..3]-(b) with a,b,relationships(p) as r, count(relationships(p)) as rc RETURN a,b,r,rc limit 1
+/*
+MATCH
+p=(a {vkId:15970041})-[*2]-(b)
+with
+a,b,relationships(p) as r, count(relationships(p)) as rc, nodes(p) as n
+
+RETURN
+a,collect(distinct b), collect(distinct n),r,rc
+limit 10
+*/
