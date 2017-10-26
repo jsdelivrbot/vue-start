@@ -123,7 +123,6 @@ app.listen(3000, () => {
 });
 
 
-
 let vk = new VK({
   'appId': 5227310,
   'appSecret': 'W1gKOVIOX0ssJt8OZRHN',
@@ -137,171 +136,148 @@ vk.setSecureRequests(false);
 //TODO add dob
 //TODO
 
-let getFriends = function getFriends(uid, count, deepness) {
-  globalChecked = globalChecked.filter((v, i, a) => a.indexOf(v) === i);
-  deepness = deepness || 0;
-  if (deepness > startDeepness) {
-    return
-  }
-  if (globalChecked.indexOf(uid) >= 0) {
-    console.log(globalChecked.indexOf(uid), uid, globalChecked.length);
-    return
-  }
-  let myEvent = uid;
-  vk.request(
-    'friends.get',
-    {
-      // 'order': 'hint',
-      'order': 'mobile',
-      // 'order':'random',
-      'user_id': uid,
-      'count': count,
-      'fields':
-      'id, ' +
-      'domain, ' +
-      'bdate, ' +
-      'photo_200_orig',
-    },
-    myEvent);
-  vk.on(
-    myEvent,
-    function (_o) {
-      if (_o.response && _o.response.items) {
-        let itemsToScan = _o.response.items.filter(item => globalChecked.indexOf(item.id) < 0);
-        if (itemsToScan.length < 1) {
-          return
-        }
-        // console.log('Start Event [', myEvent, ']', ' deep [', deepness, ']', ' items [', itemsToScan.length, ']');
-        itemsToScan.map(item => {
-          globalList.push({id0: myEvent, id1: item});
-          globalList = globalList.filter((v, i, a) => a.indexOf(v) === i);
-        });
-        itemsToScan.map(item => {
-          globalToScan.push({id: item.id, startCount: startCount, deepness: deepness + 1});
-        });
-      }else{
-        console.log(myEvent,':',_o.error.error_msg);
+let getFriends = function getFriends(uid, count, deepness, relation) {
 
-        db.cypher({
-          query:'MATCH (u0:Person { vkId: {vkId0} }) SET u0:Deactivated',
-          params: {
-            vkId0:myEvent
-          }
-        },function (err, res) {
-
-        })
-      }
-
-    });
-
-};
-let setRelationFriend = function () {
   return new Promise(function (resolve, reject) {
-    let data = globalList.pop();
-    if (!data) {
+
+
+    globalChecked[relation] = globalChecked[relation].filter((v, i, a) => a.indexOf(v) === i);
+    deepness = deepness || 0;
+    if (deepness > startDeepness) {
       return
     }
-    let uid0 = data.id0;
-    let uid1 = data.id1;
+    if (globalChecked[relation].indexOf(uid) >= 0) {
+      console.log(globalChecked['Friend'].indexOf(uid), uid, globalChecked['Friend'].length);
+      return
+    }
+    let myEvent = uid + '_' + relation;
 
-    // console.log(JSON.stringify(uid1));
+    let requestName = 'friends.get';
+    if (relation === 'Friend') {
+      requestName = 'friends.get'
+    }
+    if (relation === 'Follower') {
+      requestName = 'users.getFollowers'
+    }
 
-    db.cypher(
-      {
+    vk.request(
+      requestName, {
+        'order': 'mobile',
+        'user_id': uid,
+        'count': count,
+        'fields': 'id, domain, bdate',
+      }, myEvent);
+
+
+    vk.on(
+      myEvent,
+      function (_o) {
+        let itemsExport = [];
+
+        if (_o.response && _o.response.items) {
+          let itemsToScan = _o.response.items.filter(item => globalChecked[relation].indexOf(item.id) < 0);
+          console.log('itemsToScan => ', itemsToScan.count);
+          myEvent = myEvent.split('_');
+          if (itemsToScan.length < 1) {
+            return
+          }
+
+          resolve({
+            setRelation: itemsToScan.map(item => {
+              return {id0: myEvent[0], id1: item, relation: relation}
+            }),
+            scanRelation: itemsToScan.map(item => {
+              return {id: item.id, startCount: startCount, deepness: deepness + 1, relation: relation}
+            })
+          })
+
+        } else {
+          db.cypher({
+            query: 'MATCH (u0:Person { vkId: {vkId0} }) SET u0:Deactivated', params: {
+              vkId0: myEvent
+            }
+          }, (err, res) => {
+            console.log(myEvent, ':', _o.error.error_msg);
+          })
+        }
+
+
+      });
+  })
+};
+
+let setRelationFriend = function (uid0, uid1, relation) {
+  return new Promise(function (resolve, reject) {
+    db.cypher({
         query:
         'MERGE (u0:Person { vkId: {vkId0} })' +
-        // 'ON MATCH SET u0.found = TRUE ' +
-        // 'ON CREATE SET u0.created = TRUE ' +
-        // 'ON CREATE SET u0.found = FALSE ' +
-
         'MERGE (u1:Person { vkId: {vkId1} })' +
-        'ON MATCH SET u1.found = TRUE ' +
-        'ON CREATE SET u1.created = TRUE ' +
-
-
-        // 'MERGE (u0)<-[r:Friend]-(u1)' +
-        // 'MERGE (u0)-[r:Friend]->(u1)' +
-        'MERGE (u0)-[r:Friend]-(u1)' +
-
+        'MERGE (u1)-[r:' + relation + ']->(u0)' +
         'SET u1.vkDomain = {vkId1Domain} ' +
         'SET u1.firstName = {vkId1FirstName} ' +
         'SET u1.lastName = {vkId1LastName} ' +
-
         'RETURN u1, u0, r',
-        // query: 'MERGE (u0:Person { vkId: {vkId0} }),(u1:Person { vkId: {vkId1} })  MERGE (u0)-[r:Friend]-(u1)',
         params: {
           vkId0: uid0,
           vkId1: uid1.id,
           vkId1Domain: uid1.domain,
           vkId1FirstName: uid1.first_name,
           vkId1LastName: uid1.last_name,
-          // relation:'Friend'
-
         }
       },
       function (err, res) {
-        globalChecked.push(uid0);
-        globalChecked.push(uid1.id);
-        // console.log('ADDING RELATION');
-        // console.log('ERROR: ', err);
-        // console.log('RESLT: ', JSON.stringify(res));
-        setRelationFriend();
+        let data = globalList.pop();
+        if (!data) {
+          return
+        }
+        let uid0 = data.id0;
+        let uid1 = data.id1;
+        let relation = data.relation;
+        setRelationFriend(uid0, uid1, relation);
+        globalChecked[relation].push(res[0].u0.properties.vkId);
       });
   });
 };
 
 
-
-
-
-let startCount = 100;
-let startDeepness = 3;
+let startCount = 2;
+let startDeepness = 1;
 let globalList = [];
-// let globalFriends = [1047350, 10616624, 441575607, 136352849, 1097538, 136352849, 8219971];
-// let globalFriends = [15970041,5319461,208576695,227630028,271128644];
-let globalFriends = [6526905,7304475];
-// let globalFriends = [15970041,5319461,8500351,208576695,227630028,15970041,5319461,271128644];
-//https://vk.com/albums148943263
-//https://vk.com/doc243240023_452920817
-//https://vk.com/albums163948203
-//https://vk.com/albums138701665
-//https://vk.com/albums216621231
-//https://vk.com/albums3326710
-//https://vk.com/albums234280163
-//https://vk.com/doc52809064_452376811
-//https://vk.com/doc170557796_452653556
-//https://vk.com/doc446870248_452580223
-//https://vk.com/albums214523910
-//https://vk.com/albums162299630
-
+let globalFriends = [999];
 
 // TODO array to file / from file
-let globalChecked = [];
+let globalChecked = {Friend: [], Follower: []};
 let globalToScan = [];
 
-// getFriends(startUid, startCount, 0);
+// cron.schedule('*/5 * * * * *', () => {
+//   let data = globalList.pop();
+//   if (!data) {
+//     return
+//   }
+//   let uid0 = data.id0;
+//   let uid1 = data.id1;
+//   let relation = data.relation;
+//   setRelationFriend(uid0, uid1, relation);
+// });
 
-cron.schedule(
-  '*/5 * * * * *',
-  () => {
-    setRelationFriend();
-  });
-cron.schedule(
-  '*/1 * * * * *',
-  () => {
-    globalToScan = globalToScan.filter((v, i, a) => a.indexOf(v) === i);
-    globalToScan = globalToScan.filter((v) => globalChecked.indexOf(v.id) < 0);
-    let scanObj = globalToScan.pop();
-    if (!scanObj) {
-      return
-    }
-    getFriends(scanObj.id, scanObj.startCount, scanObj.deepness);
-    console.log('Items to scan :', globalToScan.length, 'Full count [', (Math.pow(startCount, startDeepness+1))*globalFriends.length - globalChecked.length, ']', ' now scanning :', JSON.stringify(scanObj), ' scanned :', globalChecked.length);
-  });
+// cron.schedule('*/1 * * * * *', () => {
+//   globalToScan = globalToScan.filter((v, i, a) => a.indexOf(v) === i);
+//   let scanObj = globalToScan.pop();
+//
+//   if (!scanObj) {
+//     return
+//   }
+//   getFriends(scanObj.id, scanObj.startCount, scanObj.deepness, scanObj.relation);
+//   // globalChecked[scanObj.relation].push(scanObj.id);
+//   // getFollowers(scanObj.id, scanObj.startCount, scanObj.deepness);
+//   console.log('Items to scan :', globalToScan.length, 'Full count [', (Math.pow(startCount, startDeepness + 1)) * globalFriends.length - globalChecked['Friend'].length - globalChecked['Follower'].length, ']', ' now scanning :', JSON.stringify(scanObj), ' scanned :', globalChecked['Friend'].length + globalChecked['Follower'].length);
+// });
 
 
 globalFriends.map(function (item) {
-  getFriends(item, startCount, 0);
+  getFriends(item, startCount, 0, 'Friend').then((a, b) => console.log(a, b));
+  // getFriends(item, startCount, 0, 'Follower');
+  // getFollowers(item, startCount, 0);
 });
 
 
