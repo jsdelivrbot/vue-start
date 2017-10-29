@@ -139,53 +139,57 @@ let getFriends = function getFriends(uid, count, deepness, step) {
     deepness = deepness || 0;
     if (deepness >= startDeepness) return;
 
-    let relRequests = [{rel: 'Friend', req: 'friends.get'}, {rel: 'Follower', req: 'users.getFollowers'}];
+    let relRequests = [
+      {rel: 'Friend', req: 'friends.get'},
+      {rel: 'Follower', req: 'users.getFollowers'},
+      {rel: 'Followed', req: 'users.getSubscriptions'}
+    ];
     relRequests.map(relRequest => {
-      if (globalChecked[relRequest.rel].indexOf(uid) < 0) {
-        let myEvent = uid + '_' + relRequest.rel;
-        vk.request(relRequest.req, {
-          'order': 'mobile',
-          'user_id': uid,
-          'count': count,
-          'fields': 'id, domain, bdate',
-        }, myEvent);
+      // TODO SUBSCRIPTIONS
+      switch (relRequest.req) {
+        case 'users.getSubscriptions': {
 
-        vk.on(
-          myEvent,
-          function (_o) {
-            // console.log('got event', myEvent);
-            let myEventArr = myEvent.split('_');
-            if (_o.response && _o.response.items) {
 
-              console.log('[', deepness, ']', myEventArr[1], ':', JSON.stringify(_o.response.items));
-              _o.response.items.map(item => {
-                if (globalChecked[relRequest.rel].indexOf(item.id) < 0) {
-                  globalList.push({id0: uid, id1: item, relation: myEventArr[1]});
-                  getFriends(item.id, startCount, deepness + 1);
-                  globalChecked[relRequest.rel].push(item.id);
+          break;
+        }
+        default:
+          if (globalChecked[relRequest.rel].indexOf(uid) < 0) {
+            let myEvent = uid + '_' + relRequest.rel;
+            vk.request(relRequest.req, {
+              'order': 'mobile',
+              'user_id': uid,
+              'count': count,
+              'fields': 'id, domain, bdate, home_town',
+            }, myEvent);
+
+            vk.on(
+              myEvent,
+              function (_o) {
+                // console.log('got event', myEvent);
+                let myEventArr = myEvent.split('_');
+                if (_o.response && _o.response.items) {
+                  console.log('[', deepness, ']', myEventArr[1], ':', JSON.stringify(_o.response.items));
+                  _o.response.items.map(item => {
+                    if (globalChecked[relRequest.rel].indexOf(item.id) < 0) {
+                      globalList.push({id0: uid, id1: item, relation: myEventArr[1]});
+                      getFriends(item.id, startCount, deepness + 1);
+                      globalChecked[relRequest.rel].push(item.id);
+                    }
+                  })
                 }
-              })
+                else {
+                  console.log(myEvent, ':', _o.error.error_msg);
+                }
+
+                globalChecked[relRequest.rel].push(uid)
 
 
-            } else {
-              console.log(myEvent, ':', _o.error.error_msg);
-              // db.cypher({
-              //     query: 'merge (u0:Person { vkId: {vkId0} }) SET u0:Deactivated return u0',
-              //     params: {vkId0: myEventArr[0]}
-              //   },
-              //   (err, res) => {
-              //     console.log(res);
-              //   }
-              // )
-            }
-
-            globalChecked[relRequest.rel].push(uid)
-
-
-          });
-      } else {
-        console.log('already checked');
+              });
+          } else {
+            console.log('already checked');
+          }
       }
+
 
     })
 
@@ -200,20 +204,30 @@ let setRelationFriend = function (uid0, uid1, relation) {
       return;
     }
 
+    let cityString = '';
+    let cityRelString = '';
+    if (!!uid1.home_town) {
+// TODO CITY - BASE64
+      cityString = `MERGE (c0:City { name: "` + uid1.home_town.replace(/"/g,"").replace(/'/g,"_").replace(/ /g,"").split(',')[0] + `"}) `;
+      cityRelString = 'MERGE (u1)-[:HomeTown]->(c0) ';
+
+      console.log(cityString);
+    }
 
     db.cypher({
         query:
-        'MERGE (u0:Person { vkId: {vkId0} })' +
-        'MERGE (u1:Person { vkId: {vkId1} })' +
-        'MERGE (u1)-[r:' + relation + ']->(u0)' +
-
+        cityString +
+        'MERGE (u0:Person { vkId: {vkId0} }) ' +
+        'MERGE (u1:Person { vkId: {vkId1} }) ' +
+        'MERGE (u1)-[r:' + relation + ']->(u0) ' +
+        cityRelString +
 
         'SET u1.vkDomain = {vkId1Domain} ' +
         'SET u1.firstName = {vkId1FirstName} ' +
         'SET u1.lastName = {vkId1LastName} ' +
 
         (uid1.deactivated ? 'SET u1:Deactivated ' : '') +
-        (uid1.deactivated ? 'SET u1:'+ uid1.deactivated +' ' : '') +
+        (uid1.deactivated ? 'SET u1:' + uid1.deactivated + ' ' : '') +
 
         'RETURN u1, u0, r',
         params: {
@@ -240,20 +254,15 @@ let setRelationFriend = function (uid0, uid1, relation) {
 
 
 //  =================================== start parameters
-let startCount = 1;
-let startDeepness = 3;
+let startCount = 100;
+let startDeepness = 2;
 let globalList = [];
 
-let globalFriends = [440547032];
+let globalFriends = [151507691];
 
 // TODO array to file / from file
 let globalChecked = {Friend: [], Follower: [], Scanned: {}};
-let globalToScan = [];
-let globalRelations = ['Friend', 'Follower'];
-// let globalRelations = ['Follower'];
-// let globalRelations = ['Friend'];
-
-cron.schedule('*/60 * * * * *', () => {
+cron.schedule('*/10 * * * * *', () => {
 
   let data = globalList.pop();
   if (!data) {
