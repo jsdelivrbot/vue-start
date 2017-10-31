@@ -411,6 +411,8 @@ globalFriends.map(function (item) {
 //MATCH p=(a)-[*..3]-(b) with a,b,relationships(p) as r, count(relationships(p)) as rc RETURN a,b,r,rc limit 1
 //MATCH (n:Person) where n.lastName =~ '(?i).*ilIpe.*' RETURN n LIMIT 25
 //MATCH (n:Person) where n.firstName =~ '(?i).*aterinka.*' RETURN n LIMIT 25
+//MATCH p=(n:Person)-[*..3]-(m:Person) where n.firstName =~ '(?i).*aterinka.*' and m.vkId=1047350 RETURN p limit 50
+//MATCH (x:User), (y:User)  WHERE x.vkId=y.vkIid   RETURN x
 /*
 MATCH
 p=(a {vkId:15970041})-[*2]-(b)
