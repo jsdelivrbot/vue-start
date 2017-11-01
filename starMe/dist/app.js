@@ -138,6 +138,101 @@ vk.setSecureRequests(false);
 //TODO add dob
 //TODO
 
+let setRelelation = function (id1, id2, relation) {
+  return new Promise(function (resolve, reject) {
+    let ne4jQuery = '' +
+      'MERGE (u0:Person { vkId: ' + id1 + ' }) ' +
+      'MERGE (u1:Person { vkId: ' + id2 + ' }) ' +
+      'MERGE (u1)-[r:' + relation + ']->(u0) ' +
+      'RETURN u1, u0, r';
+    let session = driver.session();
+    session.run(ne4jQuery).then(resolve)
+  })
+};
+
+let getFriendsList = function getFriendsList(sourceVkId, count, deep, startResult) {
+  return new Promise(function (resolve, reject) {
+    let request = {rel: 'Friend', req: 'friends.get'};
+    let parameters = {'order': 'mobile', 'user_id': sourceVkId, 'count': count, 'fields': 'id'};
+    let myEvent = sourceVkId + '_' + request.rel + '_' + request.req;
+    let result = startResult || {sourceVkId, deep, listTargetsVkId: [], listRelations: []};
+    vk.request(request.req, parameters, myEvent);
+    vk.on(
+      myEvent, _o => {
+        if (_o.response && _o.response.items) {
+          _o.response.items.map(item => {
+            result.listTargetsVkId.push(item.id);
+            result.listRelations.push({source: sourceVkId, target: item.id, relation: request.rel})
+          });
+          resolve(result)
+        }
+        else {
+          result.error = myEvent + ':' + _o.error.error_msg;
+          resolve(result);
+        }
+      });
+  })
+};
+let getFollowersList = function getFriendsList(sourceVkId, count, deep, startResult) {
+  return new Promise(function (resolve, reject) {
+    let request = {rel: 'Follower', req: 'users.getFollowers'};
+    let parameters = {'order': 'mobile', 'user_id': sourceVkId, 'count': count, 'fields': 'id'};
+    let myEvent = sourceVkId + '_' + request.rel + '_' + request.req;
+    let result = startResult || {sourceVkId, deep, listTargetsVkId: [], listRelations: []};
+    vk.request(request.req, parameters, myEvent);
+    vk.on(
+      myEvent, _o => {
+        if (_o.response && _o.response.items) {
+          _o.response.items.map(item => {
+            result.listTargetsVkId.push(item.id);
+            result.listRelations.push({target: sourceVkId, source: item.id, relation: request.rel})
+          });
+          resolve(result)
+        }
+        else {
+          result.error = myEvent + ':' + _o.error.error_msg;
+          resolve(result);
+
+        }
+      });
+  })
+};
+let getFollowedList = function getFriendsList(sourceVkId, count, deep, startResult) {
+  return new Promise(function (resolve, reject) {
+    let request = {rel: 'Follower', req: 'users.getSubscriptions'};
+    let parameters = {'order': 'mobile', 'user_id': sourceVkId, 'count': count, 'fields': 'id', 'extended': 0};
+    let myEvent = sourceVkId + '_' + request.rel + '_' + request.req;
+    let result = startResult || {sourceVkId, deep, listTargetsVkId: [], listRelations: []};
+    vk.request(request.req, parameters, myEvent);
+    vk.on(
+      myEvent, _o => {
+        if (_o.response.users.items) {
+          _o.response.users.items.map(item => {
+            result.listTargetsVkId.push(item);
+            result.listRelations.push({source: sourceVkId, target: item, relation: request.rel})
+          });
+          resolve(result)
+        }
+        else {
+          result.error = myEvent + ':' + _o.error.error_msg;
+          resolve(result);
+        }
+      });
+  });
+};
+let setAllRelations = function setAllRelations(startResult) {
+  return new Promise(function (resolve, reject) {
+    let relToSet = startResult.listRelations.pop();
+    if (relToSet) {
+      setRelelation(relToSet.source, relToSet.target, relToSet.relation).then(item => setAllRelations(startResult));
+    } else if (!relToSet) {
+      resolve(startResult);
+    }
+  })
+};
+
+
+
 let getFriends = function getFriends(uid, count, deepness, step) {
   return new Promise(function (resolve, reject) {
     deepness = deepness || 0;
@@ -244,7 +339,6 @@ let getFriends = function getFriends(uid, count, deepness, step) {
     })
   })
 };
-
 let setRelationFriend = function (uid0, uid1, relation, direction) {
   return new Promise(function (resolve, reject) {
     if (globalChecked[relation].indexOf(uid0 + '->' + uid1.id) >= 0) {
@@ -352,49 +446,53 @@ let setRelationFriend = function (uid0, uid1, relation, direction) {
   });
 };
 
-
 //  =================================== start parameters ==============================================================
-let startCount = 100;
+let startCount = 5;
 let startDeepness = 3;
 let globalList = [];
 
 // let globalFriends = [151507691]; // SHST
-let globalFriends = [1047350];
+let globalFriends = [39809];
 
 // TODO array to file / from file
 let globalChecked = {Friend: [], Follower: [], Followed: [], Subscript: [], Scanned: {}};
-cron.schedule('*/10 * * * * *', () => {
-
-  let data = globalList.pop();
-  if (!data) {
-    return
-  }
-  let uid0 = data.id0;
-  let uid1 = data.id1;
-  let relation = data.relation;
-  let direct = data.direct;
-  setRelationFriend(uid0, uid1, relation, direct);
-
-
-});
-cron.schedule('*/10 * * * * *', () => {
-  // console.log(globalToScan.sort());
-  // console.log(globalChecked.Friend.sort());
-});
-cron.schedule('*/1 * * * * *', () => {
-  // let oldLength = globalToScan.length;
-  // globalToScan = globalToScan.filter((v, i, a) => a.indexOf(v) === i);
-  // globalToScan = globalToScan.filter((v) => globalChecked['Friend'].indexOf(v.id) < 0 && globalChecked['Follower'].indexOf(v.id) < 0);
-  // let scanObj = globalToScan.length % 2 === 0 ? globalToScan.shift() : globalToScan.pop();
-  // if (!scanObj) {
-  //   return
-  // }
-  // getFriends(scanObj.id, scanObj.startCount, scanObj.deepness, scanObj.relation)
-});
+// cron.schedule('*/10 * * * * *', () => {
+//
+//   let data = globalList.pop();
+//   if (!data) {
+//     return
+//   }
+//   let uid0 = data.id0;
+//   let uid1 = data.id1;
+//   let relation = data.relation;
+//   let direct = data.direct;
+//   setRelationFriend(uid0, uid1, relation, direct);
+//
+//
+// });
+// cron.schedule('*/10 * * * * *', () => {
+//   // console.log(globalToScan.sort());
+//   // console.log(globalChecked.Friend.sort());
+// });
+// cron.schedule('*/1 * * * * *', () => {
+//   // let oldLength = globalToScan.length;
+//   // globalToScan = globalToScan.filter((v, i, a) => a.indexOf(v) === i);
+//   // globalToScan = globalToScan.filter((v) => globalChecked['Friend'].indexOf(v.id) < 0 && globalChecked['Follower'].indexOf(v.id) < 0);
+//   // let scanObj = globalToScan.length % 2 === 0 ? globalToScan.shift() : globalToScan.pop();
+//   // if (!scanObj) {
+//   //   return
+//   // }
+//   // getFriends(scanObj.id, scanObj.startCount, scanObj.deepness, scanObj.relation)
+// });
 
 
 globalFriends.map(function (item) {
-  getFriends(item, startCount, 0)
+  getFollowedList(item, startCount, 0)
+    .then(res => getFollowersList(res.sourceVkId, startCount, 0, res))
+    .then(res => getFriendsList(res.sourceVkId, startCount, 0, res))
+    .then(res => setAllRelations(res))
+    .then(console.log)
+    .catch();
 });
 
 //MATCH p=(a {vkId:7157} )-[*3..7]-(b {vkId:4939}) RETURN relationships(p),nodes(p),a,b LIMIT 25
