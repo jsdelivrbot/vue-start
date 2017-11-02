@@ -138,16 +138,17 @@ vk.setSecureRequests(false);
 //TODO add dob
 //TODO
 
-let setRelelation = function (id1, id2, relation) {
-  return new Promise(function (resolve, reject) {
-    let ne4jQuery = '' +
-      'MERGE (u0:Person { vkId: ' + id1 + ' }) ' +
-      'MERGE (u1:Person { vkId: ' + id2 + ' }) ' +
-      'MERGE (u1)-[r:' + relation + ']->(u0) ' +
-      'RETURN u1, u0, r';
-    let session = driver.session();
-    session.run(ne4jQuery).then(resolve)
-  })
+let setRelelation = function (id1, id2, relation, callback) {
+
+  let ne4jQuery = '' +
+    'MERGE (u0:Person { vkId: ' + id1 + ' }) ' +
+    'MERGE (u1:Person { vkId: ' + id2 + ' }) ' +
+    'MERGE (u1)-[r:' + relation + ']->(u0) ' +
+    'RETURN u1, u0, r';
+  console.log(ne4jQuery);
+  let session = driver.session();
+  session.run(ne4jQuery).then(callback);
+
 };
 
 let getFriendsList = function getFriendsList(sourceVkId, count, deep, startResult) {
@@ -223,14 +224,17 @@ let getFollowedList = function getFriendsList(sourceVkId, count, deep, startResu
 let setAllRelations = function setAllRelations(startResult) {
   return new Promise(function (resolve, reject) {
     let relToSet = startResult.listRelations.pop();
-    if (relToSet) {
-      setRelelation(relToSet.source, relToSet.target, relToSet.relation).then(item => setAllRelations(startResult));
-    } else if (!relToSet) {
+    if (!!relToSet) {
+      setRelelation(relToSet.source, relToSet.target, relToSet.relation, (x) => {
+        setAllRelations(startResult)
+      });
+    } else {
+      console.log('-!-');
       resolve(startResult);
+      return startResult;
     }
   })
 };
-
 
 
 let getFriends = function getFriends(uid, count, deepness, step) {
@@ -491,7 +495,7 @@ globalFriends.map(function (item) {
     .then(res => getFollowersList(res.sourceVkId, startCount, 0, res))
     .then(res => getFriendsList(res.sourceVkId, startCount, 0, res))
     .then(res => setAllRelations(res))
-    .then(console.log)
+    .then(res => console.log(res))
     .catch();
 });
 
