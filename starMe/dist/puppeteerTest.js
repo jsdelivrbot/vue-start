@@ -81,8 +81,13 @@ let scrape = async () => {
     let showFrames = await showFrame.childFrames();
 
     //get bio caption
+    let bioCaption;
     let bioElements = await showFrame.$$('td.tg  table  tbody  tr  td');
-    let bioCaption = await bioElements[0].asElement();
+
+
+    // console.log('bioElements[0]');
+    bioCaption = await bioElements[0].asElement();
+
     let bioCaptionValue = await bioCaption.getProperty('innerText');
     let bioCaptionText = await bioCaptionValue.jsonValue();
     // console.log(bioCaptionText);
@@ -92,22 +97,15 @@ let scrape = async () => {
     let bioElementValue = await bioElement[0].getProperty('innerText');
     let bioElementText = await bioElementValue.jsonValue();
     // console.log(bioElementText);
-
     personObject.rawInfo[bioCaptionText] = bioElementText;
 
-
     //get profile comments
-    //html/body/table/tbody/tr[2]/td/table/tbody/tr[3]/td/text()
     let commentElements = await showFrame.$$('tr.lh td.sm');
-
-    let commentsPromises = await commentElements.map(
-      el => {
-        return el
-          .asElement()
-          .getProperty('innerText')
-          .then(o => o.jsonValue())
-      });
-
+    let commentsPromises = [];
+    for (let i in commentElements) {
+      // console.log('commentElements [i]');
+      commentsPromises.push(commentElements [i].asElement().getProperty('innerText').then(o => o.jsonValue()));
+    }
 
     personObject.profileComments = [];
     for (let i in commentsPromises) {
@@ -121,6 +119,54 @@ let scrape = async () => {
       // console.log();
     }
 
+
+    //TODO - get photos with comments
+    let photoElements = await showFrame.$$('td.tg table tr td a');
+    personObject.photos = [];
+    for (let i in photoElements) {
+      let photoObject = {};
+      // console.log('photoElements[i]');
+      let photoHref = await photoElements[i].asElement().getProperty('href').then(el => el.jsonValue());
+      photoObject.url = photoHref;
+      let photoPage = await browser.newPage();
+      await photoPage.goto(photoHref);
+
+
+      await page.waitFor(1000);
+      let photoElement = await photoPage.$('tr td img[src*="_fok/+"]');
+      // console.log('photoElement');
+      let photoElementHref = await photoElement.asElement().getProperty('src').then(el => el.jsonValue());
+      photoObject.src = photoElementHref;
+      //get photo comments
+      photoObject.comments = [];
+      let commentElements = await photoPage.$$('tr.lh td.sm');
+      let commentsPromises = await commentElements.map(
+        el => {
+          return el
+            .asElement()
+            .getProperty('innerText')
+            .then(o => o.jsonValue())
+        });
+
+
+      for (let i in commentsPromises) {
+        let commentText = await commentsPromises[i];
+        let commentArray = commentText.replace(':', ';').replace('\n', ';').split(';');
+        let commentObject = {};
+        commentObject.author = commentArray[0];
+        commentObject.text = commentArray[1];
+        commentObject.time = commentArray[2];
+        // console.log(commentObject);
+        photoObject.comments.push(commentObject);
+        // personObject.profileComments.push(commentObject);
+        // console.log();
+      }
+      // console.log(photoObject);
+      await photoPage.close()
+      await personObject.photos.push(photoObject);
+    }
+    // td.sm b a -> click
+    //
     console.log('\n--------------- NEW PERSON START-------------------');
     console.log(JSON.stringify(personObject));
     console.log('--------------- NEW PERSON END --------------------\n');
@@ -137,12 +183,19 @@ let scrape = async () => {
   // );
   // console.log(elemsToClick);
   console.log(JSON.stringify(personsObjects));
+
   page.close();
   await page.waitFor(3000);
   browser.close();
 };
 
-scrape();
+try {
+  scrape()
+}
+catch (e) {
+  console.log(e);
+}
+;
 // .then(console.log)
 // .catch(console.log);
 
