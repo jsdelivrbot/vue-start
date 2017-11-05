@@ -15,6 +15,8 @@ let scrape = async () => {
   let frames = await page.frames();
   let listFrame = frames.find(f => f.name() === 'list');
   const links = await listFrame.$$('nobr font a');
+  // todo show all 
+
   let personsObjects = [];
 
   for (let link in links) {
