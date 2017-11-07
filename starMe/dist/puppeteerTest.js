@@ -5,33 +5,29 @@ let file = 'data.json';
 
 
 let scrape = async () => {
-  const browser = await puppeteer.launch({headless: false});
+  const browser = await puppeteer.launch({headless: true});
   const page = await browser.newPage();
-  await page.setViewport({width: 800, height: 600});
-
+  await page.setViewport({width: 1920, height: 1080});
 
   await page.goto('http://bizarre.kiev.ua/photo/');
-  // await page.click('#default > div > div > div > div > section > div:nth-child(2) > ol > li:nth-child(1) > article > div.image_container > a > img');
-  // await page.click('html > body > nobr > font >a[1]');
-  // body > table > tbody > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody > tr:nth-child(1) > td > font > b
 
   let frames = await page.frames();
   let listFrame = frames.find(f => f.name() === 'list');
 
   await listFrame.waitForSelector('a[href*="show=all"]');
   let showAllList = await listFrame.$('a[href*="show=all"]');
-
   await showAllList.click();
-  await page.waitFor(2000);
 
+  await listFrame.waitForSelector('a[href*="list.pl?show=new"]');
   await listFrame.waitForSelector('nobr font a');
-  const links = await listFrame.$$('nobr font a');
 
+  const links = await listFrame.$$('nobr font a');
   console.log('count of accounts : ', links.length);
 
   let personsObjects = jsonfile.readFileSync(file) || [];
   // console.dir(jsonfile.readFileSync(file));
   let checked = jsonfile.readFileSync(file).map(el => el.link);
+
   for (let link = links.length - 1; link >= 0; link--) {
     // for (let link in links) {
     let personObject = {};
@@ -49,52 +45,38 @@ let scrape = async () => {
     if (checked.indexOf(currentHref) > -1) {
       console.log('checked:', currentText);
     } else {
-      await page.waitFor(1000);
+      console.log('\n.:: NEW PERSON --- [' + link + '] --- [' + currentText + '] ::.');
+      await page.waitFor(500);
       // person info frame
       let showFrame = await frames.find(f => f.name() === 'show');
       // open all comments
-      let linkShowAll = await showFrame.$$('tr.dr td.sm b a');
-      if (linkShowAll[0]) {
-        await linkShowAll[0].click();
-      }
-      // get nick - reserve version
-      let nickNameElement = await showFrame.$$('tbody tr td font ');
-      let nickNameTextProperty = await nickNameElement[0].getProperty('innerText');
-      let nickNameText = await nickNameTextProperty.jsonValue();
-      nickNameText = nickNameText.replace(/::/gi, '');
-      // console.log(nickNameText);
 
+      try {
+        //info.pl?n=ce%eape%f2ap%f8a_%e1%ebo%ed%e4%e8%ed%eaa&l=&sx=x&pg=-1
+        //info.pl?n=ce%eape%f2ap%f8a_%e1%ebo%ed%e4%e8%ed%eaa&l=&sx=x&pg=0
+        await showFrame.$eval('a[href*="pg=-1"]', showAll => showAll.click());
+        await showFrame.waitForSelector('a[href*="pg=0"');
+      }
+      catch (err) {
+        console.log('comments not present');
+      }
 
       // get link to social network
-      // todo get all social networks
-      let nickVkElements = await showFrame.$$('tbody tr td font b font a');
-      personObject.social = [];
-      if (nickVkElements.length > 0) {
-        for (let i in nickVkElements) {
-          let nickVkTextProperty = await nickVkElements[i].getProperty('href');
-          let nickVkText = await nickVkTextProperty.jsonValue();
-          personObject.social.push(nickVkText);
-          // console.log(nickVkText);
-        }
-      }
+      personObject.social = await showFrame.$$eval('tbody tr td font b font a', socialLinks => socialLinks.map(socialLink => socialLink.href));
+      console.log('Social done : ' + JSON.stringify(personObject.social));
 
+
+      personObject.rawInfo = {};
       // get table with info about user
       await showFrame.waitForSelector('tr.tg td');
-      let tableElements = await showFrame.$$('tr.tg td');
-      personObject.rawInfo = {};
-      for (let i = 0; i < tableElements.length / 2; i++) {
-        let propElementCaption = await tableElements[i * 2];
-        let propElementCaptionValue = await propElementCaption.getProperty('innerText');
-        let propElementCaptionText = await propElementCaptionValue.jsonValue();
+      (await showFrame.$$eval('tr.tg', data => data.map(el=>el['innerText'])))
+        .map(text => text.replace(':', '\u1060'))
+        .map(text => text.replace('\t', ''))
+        .map(text => text.split('\u1060'))
+        .map(arr => {
+          personObject.rawInfo[arr[0]] = arr[1]
+        });
 
-        let propElement = await tableElements[i * 2 + 1];
-        let propElementValue = await propElement.getProperty('innerText');
-        let propElementText = await propElementValue.jsonValue();
-
-        personObject.rawInfo[propElementCaptionText] = propElementText;
-        // console.log(propElementCaptionText, '\t[', propElementText, ']');
-
-      }
 
       // subframes on persons page
       let showFrames = await showFrame.childFrames();
@@ -117,9 +99,18 @@ let scrape = async () => {
       let bioElementText = await bioElementValue.jsonValue();
       // console.log(bioElementText);
       personObject.rawInfo[bioCaptionText] = bioElementText;
+      console.log('Bio Done');
 
       //get profile comments
-      let commentElements = await showFrame.$$('tr.lh td.sm');
+      showFrame.waitForSelector('tr.lh td.sm');
+      let commentElements = [];
+      try {
+        commentElements = await showFrame.$$('tr.lh td.sm');
+      }
+      catch (error) {
+        showFrame.waitForSelector('tr.lh td.sm');
+        await page.screenshot({path: '!profileComments - biz[' + link + '].png'});
+      }
       let commentsPromises = [];
       for (let i in commentElements) {
         // console.log('commentElements [i]');
@@ -137,71 +128,64 @@ let scrape = async () => {
         personObject.profileComments.push(commentObject);
 
       }
+      console.log('Comments Done');
 
 
-      let photoElements = await showFrame.$$('td.tg table tr td a');
+      // profile photos
       let photoHrefs = [];
-      for (let i in photoElements) {
-        let photoHref = await photoElements[i].asElement().getProperty('href').then(el => el.jsonValue());
-        photoHrefs.push(photoHref);
+      showFrame.waitForSelector('a[href*="show.pl?n="]');
+      try {
+        photoHrefs = await showFrame.$$eval('a[href*="show.pl?n="]', imgs => {
+          return imgs.map(img => img['href'])
+        });
+      } catch (err) {
+        console.log('photos not found?');
+        await page.screenshot({path: '!photos - biz[' + link + '].png'});
       }
+
       personObject.photos = [];
       for (let i in photoHrefs) {
-        console.log('photo # ', i);
         let photoObject = {};
-        // console.log('photoElements[i]');
         photoObject.url = photoHrefs[i];
-        console.log('photo href : ', photoObject.url);
         let photoPage = await browser.newPage();
         await photoPage.goto(photoObject.url);
+
         try {
-          await photoPage.waitForSelector('tr.dr td.sm b a', {timeout:1000});
+          await photoPage.$eval('a[href*="pg=-1"]', showAll => showAll.click());
+          await photoPage.waitForSelector('a[href*="pg=0"');
         }
         catch (err) {
+          console.log('comments not present');
+        }
 
-        }
-        let linkShowAll = await photoPage.$$('tr.dr td.sm b a');
-        if (linkShowAll[0]) {
-          await linkShowAll[0].click();
-        }
-        await photoPage.waitForSelector('tr td img[src*="_fok/+"]');
-        let photoElement = await photoPage.$$('tr td img[src*="_fok/+"]');
-        let photoElementHref = await photoElement[0].asElement().getProperty('src').then(el => el.jsonValue());
-        photoObject.src = photoElementHref;
+        await photoPage.waitForSelector('img[src*="_fok/+"]');
+        photoObject.src = await photoPage.$eval('img[src*="_fok/+"]', photo => photo['src']);
+
+
         //get photo comments
         photoObject.comments = [];
-        let commentElements = await photoPage.$$('tr.lh td.sm');
-        let commentsPromises = await commentElements.map(
-          el => {
-            return el
-              .asElement()
-              .getProperty('innerText')
-              .then(o => o.jsonValue())
+        (await photoPage.$$eval('tr.lh td.sm', comments => comments.map(comment => comment['innerText'])))
+          .map(text => {
+            // console.log(text);
+            let commentArray = text.replace(':', ';').replace('\n', ';').split(';');
+            let commentObject = {};
+            commentObject.author = commentArray[0];
+            commentObject.text = commentArray[1];
+            commentObject.time = commentArray[2];
+            photoObject.comments.push(commentObject);
           });
 
-
-        for (let i in commentsPromises) {
-          let commentText = await commentsPromises[i];
-          let commentArray = commentText.replace(':', ';').replace('\n', ';').split(';');
-          let commentObject = {};
-          commentObject.author = commentArray[0];
-          commentObject.text = commentArray[1];
-          commentObject.time = commentArray[2];
-          // console.log(commentObject);
-          photoObject.comments.push(commentObject);
-          // personObject.profileComments.push(commentObject);
-          // console.log();
-        }
         // console.log(photoObject);
         await photoPage.close();
         await personObject.photos.push(photoObject);
+        console.log('photo # ', i, 'Done');
       }
-      console.log('\n--------------- NEW PERSON START --- [' + link + '] -------------------');
-      console.log(JSON.stringify(personObject));
+
+
       console.log('--------------- NEW PERSON END --------------------\n');
       personsObjects.push(personObject);
 
-      jsonfile.writeFileSync(file, personsObjects)
+      jsonfile.writeFileSync(file, personsObjects, {spaces: 1})
 
 
       // await page.waitFor(1500);
@@ -214,7 +198,7 @@ let scrape = async () => {
   //   () => Array.from(document.body.querySelectorAll('nobr > font > a[href]'), ({href}) => href)
   // );
   // console.log(elemsToClick);
-  console.log(JSON.stringify(personsObjects));
+  // console.log(JSON.stringify(personsObjects));
 
 
   page.close();
@@ -222,12 +206,9 @@ let scrape = async () => {
   browser.close();
 };
 
-try {
-  scrape()
-}
-catch (e) {
-  console.log(e);
-}
+
+scrape()
+
 
 // .then(console.log)
 // .catch(console.log);
