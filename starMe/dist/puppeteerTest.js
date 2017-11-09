@@ -8,7 +8,6 @@ let scrape = async () => {
   const browser = await puppeteer.launch({headless: true});
   const page = await browser.newPage();
   await page.setViewport({width: 1920, height: 1080});
-
   await page.goto('http://bizarre.kiev.ua/photo/');
 
   let frames = await page.frames();
