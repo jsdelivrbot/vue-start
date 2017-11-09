@@ -1,11 +1,11 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const jsonfile = require('jsonfile');
+let browser;
 let file = 'data.json';
 
 
-let scrape = async (searchText, filterNames) => {
-  const browser = await puppeteer.launch({headless: false});
+let scrape = async (searchText, filterNames, browser) => {
   const page = await browser.newPage();
   await page.setViewport({width: 1920, height: 768});
   await page.goto('http://192.168.167.211/oscar2/#/ed/gallery');
@@ -27,7 +27,7 @@ let scrape = async (searchText, filterNames) => {
 // if not found add text to system by facebook id
   catch (e) {
     // console.log(e);
-    console.log('Not found in list - creating new');
+    console.log(new Date, searchText, 'Not found in list - creating new');
 
     await page.waitForSelector('a[href*="new"]', {timeout: 5000});
     await page.click('a[href*="new"]', {delay: 100});
@@ -56,7 +56,7 @@ let scrape = async (searchText, filterNames) => {
     await page.click('[ng-click*="reloadPage"]', {delay: 100});
   }
   catch (e) {
-    console.log(new Date, 'cannot reload page');
+    console.log(new Date, searchText, 'cannot reload page');
   }
 
 // try to open details
@@ -65,7 +65,7 @@ let scrape = async (searchText, filterNames) => {
     await page.$eval('[ng-click*="showDetails"]', el => el.click())
   }
   catch (e) {
-    console.log(new Date, 'user not ready');
+    console.log(new Date, searchText, 'user not ready');
   }
 
 
@@ -89,11 +89,9 @@ let scrape = async (searchText, filterNames) => {
     await page.waitFor(15000);
     await page.waitForSelector(execSelector, {timeout: 10000});
     await page.click(execSelector);
-
-
   }
   catch (e) {
-    console.log(new Date, 'dictionary not ready');
+    console.log(new Date, searchText, 'dictionary not ready');
   }
   // await page.waitFor(3000);
   // // browser.close()
@@ -101,9 +99,12 @@ let scrape = async (searchText, filterNames) => {
 };
 
 let searchTexts = ['abdullah', 'belmondo', 'rotveller'];
-let searchText = 'abdullah';
-let filterNames = ['social', 'isis', 'qa'];
+let filterNames = ['social', 'isis', 'qa', 'cy', 'new'];
+let starter = async (searchTexts) => {
+  let browser = await puppeteer.launch({headless: false});
+  for (let j in searchTexts) {
+    scrape(searchTexts[j], filterNames, browser);
+  }
+};
 
-for (let j in searchTexts) {
-  scrape(searchTexts[j], filterNames);
-}
+starter(searchTexts);
