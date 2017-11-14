@@ -1,7 +1,6 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const jsonfile = require('jsonfile');
-let browser;
 let file = 'data.json';
 
 
