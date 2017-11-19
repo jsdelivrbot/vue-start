@@ -35,7 +35,7 @@ let getFullPageScreenshot = async () => {
   linksThreadsList = linksThreadsList .filter((v, i, a) => a.indexOf(v) === i);
   console.log(linksThreadsList );
 
-  await page.$$eval('a[class="postbtn-hide"', btns => btns.map(btn => btn.click()));
+  await page.$$eval('a[class="postbtn-hide"]', btns => btns.map(btn => btn.click()));
 
 
 };

@@ -6,6 +6,26 @@ let file = 'data.json';
 let scrape = async () => {
   const browser = await puppeteer.launch({headless: false});
   const page = await browser.newPage();
+
+  // page.on('request', request => {
+  //   console.log(request.url);
+  // });
+  // page.on('response', response => {
+  //   console.log(response.url);
+  // });
+
+  page.on('frameattached', frm => {
+    if (frm) {
+      for(let i in frm){
+        console.log(i);
+      }
+      console.log(frm.childFrames());
+    }
+    console.log('-------------------');
+
+  });
+
+
   await page.setViewport({width: 800, height: 600});
   await page.goto('http://bizarre.kiev.ua/');
   let frames = await page.frames();
@@ -32,6 +52,7 @@ let scrape = async () => {
     // bdy.innerHTML = bdy.innerHTML.replace(/frameset/gi,'div');
     // bdy.innerHTML = bdy.innerHTML.replace(/<frame /gi,'<iframe ');
   });
+
 
   // let frameSetsRoot = await page.$$eval('frameset frame', frameSets => frameSets);
   // console.log(frameSetsRoot);
