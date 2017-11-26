@@ -60,16 +60,14 @@
 //    el:'#tst',
     
     name: 'tst',
-    data () {
+    data() {
       return {
-        
         currentUrl: 'https://nnm.me',
         msg: 'This is a test Url Shortener',
         date: new Date().toLocaleString(),
         urls: [],
         loginHash: '',
         numberHashes: 256
-        
       }
     },
     methods: {
@@ -83,7 +81,7 @@
         //	"https://api.coinhive.com/link/create"
         let options = {
           method: 'post',
-          url: 'http://127.0.0.1:3000/urlShort',
+          url: '/urlShort',
           headers: {
             auth: this.loginHash
           },
@@ -106,7 +104,7 @@
       getUrls: function () {
         let options = {
           method: 'post',
-          url: 'http://127.0.0.1:3000/getUrls',
+          url: '/getUrls',
           headers: {
             auth: this.loginHash
           },
