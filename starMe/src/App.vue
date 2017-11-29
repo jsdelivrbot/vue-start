@@ -13,11 +13,29 @@ export default {
 
 <style>
 #app {
+  position: absolute;
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+  left: 60px;
+  right: 60px;
+  top: 60px;
+  height: calc(90% - 60px);
+  
 }
+
+.btn-icon {
+  font-size: 24px;
+  width: 1em;
+}
+
+.md-button.btn-icon{
+  padding: 0;
+}
+
+
+
 </style>

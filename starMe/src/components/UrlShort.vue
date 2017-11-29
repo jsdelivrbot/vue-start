@@ -2,8 +2,7 @@
   <div class="urlShort">
     <h1>{{ msg }}</h1>
     <h2>Started at {{ date }}</h2>
-    <h3 v-model="loginHash"> Current hash is
-      <pre>{{loginHash}}</pre>
+    <h3 v-model="loginHash"> Current hash is  <div class="hash">{{loginHash}}</div>
     </h3>
     <br>
     <md-theme md-name="teal">
@@ -28,10 +27,10 @@
         <md-table-header>
           <md-table-row>
             <md-table-head>
-              long
+              Long
             </md-table-head>
             <md-table-head>
-              short
+              Short
             </md-table-head>
           </md-table-row>
         </md-table-header>
@@ -174,5 +173,14 @@
   
   td.hours {
     text-align: right;
+  }
+  
+  .hash{
+    font-family: monospace;
+    font-size: 16px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: 500;
+    line-height: 1.2em;
   }
 </style>

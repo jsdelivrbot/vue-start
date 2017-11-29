@@ -15,15 +15,14 @@
           <label>PASSWORD</label>
           <md-input type="password" v-model="loginPassword"></md-input>
         </md-input-container>
-  
+        
         <md-layout md-flex="25">
-        <md-button
-          class="md-primary "
-          
-          v-on:click="e=>login(loginName, loginPassword)"
-        >
-          LOGIN
-        </md-button>
+          <md-button
+            class="md-primary "
+            v-on:click="(e)=>{login(loginName, loginPassword)}"
+          >
+            <icon class='btn-icon' name="sign-in"></icon>
+          </md-button>
         </md-layout>
       </div>
       
@@ -31,7 +30,7 @@
       <div v-show="!!loginHash" class="md-layout">
         <md-layout>
           <md-input-container class="">
-            <label>Disabled</label>
+            <label>Your Hash is:</label>
             <md-input disabled v-model="loginHash"></md-input>
           </md-input-container>
         </md-layout>
@@ -40,7 +39,7 @@
             class='md-accent '
             v-on:click="e=>logout()"
           >
-            LOGOUT
+            <icon class='btn-icon' name="sign-out"></icon>
           </md-button>
         </md-layout>
       </div>
@@ -51,7 +50,7 @@
 <script>
   export default {
     name: 'login',
-    data () {
+    data() {
       return {
         loginName: '',
         loginPassword: '',
@@ -69,8 +68,6 @@
           },
           body: {name: loginName, pass: loginPassword}
         };
-        
-        
         this
           .$http(options, {name: loginName, pass: loginPassword})
           .then(
@@ -91,19 +88,24 @@
         this.loginHash = undefined;
         this.$bus.$emit('hash', this.loginHash);
       }
-      
     }
-    
   }
 </script>
 
 <style>
   #login {
+    position: absolute;
     font-family: 'Avenir', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
-    margin-top: 60px;
+    bottom: 60px;
+    left: 60px;
+    right: 60px;
+    height: calc(10% - 60px);
+    width: 100%;
   }
+
+
 </style>

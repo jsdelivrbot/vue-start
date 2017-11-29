@@ -2,35 +2,47 @@
   <div class="tst">
     <h1>{{ msg }}</h1>
     <h2>Started at {{ date }}</h2>
-    <h3 v-model="loginHash"> Current hash is
-      <pre>{{loginHash}}</pre>
-    </h3>
-    <br>
-    <md-theme md-name="teal">
-      <div>
-        <md-button
-          v-on:click="(e) => addTask(currentText,currentHours)"
-          :disabled="!loginHash"
-          class="md-primary"
-        >
-          add task
+    <!--<h3 v-model="loginHash"> Current hash is-->
+    <!--<pre>{{loginHash}}</pre>-->
+    <!--</h3>-->
+    <!--<br>-->
+    <div class="inputs">
+      <md-theme md-name="teal">
+        
+        <md-input-container class="md-layout task">
+          <label>
+            <icon name="tasks"></icon>
+            TASK</label>
+          <md-textarea v-model="currentText"></md-textarea>
+        </md-input-container>
+        <md-input-container class="md-layout hours">
+          <label>
+            <icon name="clock-o"></icon>
+            HOURS</label>
+          <md-textarea v-model="currentHours"></md-textarea>
+        </md-input-container>
+        <md-input-container class="md-layout url">
+          <label>
+            <icon name="link"></icon>
+            URL</label>
+          <md-textarea v-model="currentUrl"></md-textarea>
+        </md-input-container>
+        
+        <md-button v-on:click="(e) => addTask(currentText,currentHours)" :disabled="!loginHash" class="md-primary">
+          <icon class='btn-icon' name="plus"></icon>
         </md-button>
         <md-button v-on:click="(e) => saveTasks()" :disabled="!loginHash" class="md-primary">
-          save tasks
+          <icon class='btn-icon' name="cloud-upload"></icon>
         </md-button>
         <md-button v-on:click="(e) => getTasks()" :disabled="!loginHash" class="md-primary">
-          get tasks
+          <icon class='btn-icon' name="cloud-download"></icon>
         </md-button>
-      </div>
-    </md-theme>
-    
-    
-    <br>
-    <input type="text" v-model="currentText">
-    <input type="text" v-model="currentHours">
-    <input type="text" v-model="currentUrl">
-    <div>
       
+      </md-theme>
+    </div>
+    
+    
+    <div>
       <md-table>
         <md-table-header>
           <md-table-row>
@@ -47,8 +59,8 @@
             
             <md-table-cell v-for="cell in todo">{{cell}}</md-table-cell>
             <md-table-cell>
-              <md-button class="md-icon-button md-raised md-accent" v-on:click="e=>removeTodo(index)">
-                X
+              <md-button class="md-accent btn-icon" v-on:click="e=>removeTodo(index)">
+                <icon class="btn-icon" name="trash"></icon>
               </md-button>
             </md-table-cell>
           </md-table-row>
@@ -64,8 +76,10 @@
 
 
 <script>
+  
   export default {
 //    el:'#tst',
+    
     mounted: function () {
       console.log(" - - - - mounted - - - - ");
       let self = this;
@@ -82,7 +96,7 @@
       })
     },
     name: 'tst',
-    data () {
+    data() {
       return {
         
         currentHours: 100500,
@@ -90,7 +104,7 @@
         
         msg: 'This is a test TODO list',
         date: new Date().toLocaleString(),
-        tasks: [],
+        tasks: [{text: 'learn', hours: '10'}],
         loginHash: '',
         
       }
@@ -98,7 +112,7 @@
     methods: {
       
       removeTodo: function (index) {
-        this.tasks.splice(index,1);
+        this.tasks.splice(index, 1);
 //        console.log(JSON.stringify(this.tasks.splice(index)) + ' removed ' + index);
         console.log(index, this.tasks[index]);
         this.saveTasks();
@@ -117,7 +131,7 @@
         
         let options = {
           method: 'post',
-          url: 'http://127.0.0.1:3000/saveTasks',
+          url: '/saveTasks',
           headers: {
             // TODO MAKE HASH GLOBAL or GET FROM LOGIN COMPONENT
             auth: this.loginHash
@@ -140,7 +154,7 @@
       getTasks: function () {
         let options = {
           method: 'post',
-          url: 'http://127.0.0.1:3000/getTasks',
+          url: '/getTasks',
           headers: {
             // TODO MAKE HASH GLOBAL or GET FROM LOGIN COMPONENT
             auth: this.loginHash
@@ -196,4 +210,31 @@
   td.hours {
     text-align: right;
   }
+  
+  .buttons, .inputs {
+    font-size: 24px;
+    position: relative;
+    width: 100%;
+    display: inline-block;
+  }
+  
+  .task, .hours, .url {
+    display: inline-block;
+    width: 25%;
+  }
+  
+  .hours {
+    width: 7%;
+  }
+
+
+  .fa-icon {
+    width: auto;
+    height: 1em; /* or any other relative font sizes */
+    
+    /* You would have to include the following two lines to make this work in Safari */
+    max-width: 100%;
+    max-height: 100%;
+  }
+
 </style>

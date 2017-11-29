@@ -7,15 +7,21 @@ import router from './router';
 import routerLogin from './routerLogin';
 import VueResource from 'vue-resource';
 import 'vue-material/dist/vue-material.css';
-var VueMaterial = require('vue-material');
+import 'vue-material-design-icons/styles.css'
+import 'vue-awesome'
+import 'vue-awesome/icons'
+import Icon from 'vue-awesome/components/Icon.vue'
+Vue.component('icon', Icon);
+
+
+//plus-circle
+
+
+let VueMaterial = require('vue-material');
 Vue.use(VueMaterial);
-
-
 Vue.config.productionTip = false;
 Vue.use(VueResource);
 Vue.http.headers.common['Access-Control-Allow-Origin'] = '*';
-
-
 Vue.use({
   install(V) {
     let bus = new Vue();
@@ -23,8 +29,6 @@ Vue.use({
     V.bus = bus;
   }
 });
-
-
 Vue.material.registerTheme({
   default: {
     primary: {
@@ -48,7 +52,6 @@ Vue.material.registerTheme({
   }
 });
 
-
 /* eslint-disable no-new */
 let app = new Vue({
   el: '#app',
@@ -63,11 +66,6 @@ let login = new Vue({
   template: '<Login/>',
   components: {Login}
 });
-
-
-
-
-
 
 // const EventBus = new Vue();
 // Object.defineProperties(Vue.prototype, {
