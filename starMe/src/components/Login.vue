@@ -49,6 +49,14 @@
 
 <script>
   export default {
+    mounted: function () {
+      console.log(" - - - - mounted - - - - ");
+      let self = this;
+      this.$bus.$on('getHash', function (data) {
+        self.$bus.$emit('hash', this.loginHash);
+      })
+    },
+    
     name: 'login',
     data() {
       return {

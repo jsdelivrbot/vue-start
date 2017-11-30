@@ -37,6 +37,9 @@
         <md-button v-on:click="(e) => getTasks()" :disabled="!loginHash" class="md-primary">
           <icon class='btn-icon' name="cloud-download"></icon>
         </md-button>
+        <md-button v-on:click="(e) => getHash()" :disabled="!loginHash" class="md-primary">
+          <icon class='btn-icon btn-red' name="cloud-download"></icon>
+        </md-button>
       
       </md-theme>
     </div>
@@ -78,8 +81,7 @@
 <script>
   
   export default {
-//    el:'#tst',
-    
+  
     mounted: function () {
       console.log(" - - - - mounted - - - - ");
       let self = this;
@@ -93,7 +95,8 @@
           self.loginHash = '';
           self.tasks = [];
         }
-      })
+      });
+      
     },
     name: 'tst',
     data() {
@@ -117,7 +120,6 @@
         console.log(index, this.tasks[index]);
         this.saveTasks();
       },
-      
       addTask: function (text, hours) {
         
         this.tasks.push({text: text, hours: hours});
@@ -172,6 +174,9 @@
           })
           .catch(error => console.warn(error));
         
+      },
+      getHash: function () {
+        this.$bus.$emit('getHash', null);
       }
       
       
