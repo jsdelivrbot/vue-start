@@ -53,7 +53,8 @@
       console.log(" - - - - mounted - - - - ");
       let self = this;
       this.$bus.$on('getHash', function (data) {
-        self.$bus.$emit('hash', this.loginHash);
+        console.log('request to get hash');
+        self.$bus.$emit('hash', self.loginHash);
       })
     },
     
@@ -62,7 +63,7 @@
       return {
         loginName: '',
         loginPassword: '',
-        loginHash: undefined
+        loginHash: null
       }
     },
     methods: {

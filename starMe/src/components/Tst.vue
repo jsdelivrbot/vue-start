@@ -37,8 +37,8 @@
         <md-button v-on:click="(e) => getTasks()" :disabled="!loginHash" class="md-primary">
           <icon class='btn-icon' name="cloud-download"></icon>
         </md-button>
-        <md-button v-on:click="(e) => getHash()" :disabled="!loginHash" class="md-primary">
-          <icon class='btn-icon btn-red' name="cloud-download"></icon>
+        <md-button v-on:click="(e) => getHash()" class="md-primary">
+          <icon class='btn-icon btn-red' name="cogs"></icon>
         </md-button>
       
       </md-theme>
@@ -80,12 +80,14 @@
 
 <script>
   
-  export default {
   
+  export default {
+    
     mounted: function () {
       console.log(" - - - - mounted - - - - ");
       let self = this;
       this.$bus.$on('hash', function (data) {
+        console.log('getted hash:', data);
         if (data && data !== '') {
           self.loginHash = data;
           self.getTasks();
@@ -96,15 +98,19 @@
           self.tasks = [];
         }
       });
+      self.$bus.$emit('getHash', 'test');
+      
+      
+      
+      
       
     },
     name: 'tst',
     data() {
       return {
-        
         currentHours: 100500,
         currentText: 'Learn VUE',
-        
+        currentUrl: 'https://tranquil-oasis-53495.herokuapp.com/',
         msg: 'This is a test TODO list',
         date: new Date().toLocaleString(),
         tasks: [{text: 'learn', hours: '10'}],
@@ -176,7 +182,7 @@
         
       },
       getHash: function () {
-        this.$bus.$emit('getHash', null);
+        this.$bus.$emit('getHash', 'test');
       }
       
       
@@ -231,8 +237,7 @@
   .hours {
     width: 7%;
   }
-
-
+  
   .fa-icon {
     width: auto;
     height: 1em; /* or any other relative font sizes */

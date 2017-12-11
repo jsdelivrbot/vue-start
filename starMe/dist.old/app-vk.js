@@ -8,7 +8,6 @@ const bodyParser = require('body-parser');
 const md5 = require('md5');
 const request = require('request');
 const formurlencoded = require('form-urlencoded');
-const VK = require('vksdk');
 // const neo4j = require('neo4j');
 const neo4j = require('neo4j-driver').v1;
 const cron = require('node-cron');
@@ -148,29 +147,6 @@ let setRelelation = function (id1, id2, relation, callback) {
   let session = driver.session();
   session.run(ne4jQuery).then(callback);
 
-};
-let getFriendsList = function getFriendsList(sourceVkId, count, deep, startResult) {
-  return new Promise(function (resolve, reject) {
-    let request = {rel: 'Friend', req: 'friends.get'};
-    let parameters = {'order': 'mobile', 'user_id': sourceVkId, 'count': count, 'fields': 'id'};
-    let myEvent = sourceVkId + '_' + request.rel + '_' + request.req;
-    let result = startResult || {sourceVkId, deep, listTargetsVkId: [], listRelations: []};
-    vk.request(request.req, parameters, myEvent);
-    vk.on(
-      myEvent, _o => {
-        if (_o.response && _o.response.items) {
-          _o.response.items.map(item => {
-            result.listTargetsVkId.push(item.id);
-            result.listRelations.push({source: sourceVkId, target: item.id, relation: request.rel})
-          });
-          resolve(result)
-        }
-        else {
-          result.error = myEvent + ':' + _o.error.error_msg;
-          resolve(result);
-        }
-      });
-  })
 };
 let getFollowersList = function getFriendsList(sourceVkId, count, deep, startResult) {
   return new Promise(function (resolve, reject) {
