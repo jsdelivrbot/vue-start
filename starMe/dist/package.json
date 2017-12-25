@@ -1,0 +1,45 @@
+{
+  "engines": {
+    "node": "8.9.1"
+  },
+  "name": "scrapeitall",
+  "version": "1.0.0",
+  "description": "Info and photo scraper and grubber",
+  "main": "index.js",
+  "config": {
+    "port": "8080"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kinokus/scrapeItAll.git"
+  },
+  "keywords": [
+    "scrape",
+    "grab",
+    "node",
+    "heroku",
+    "express"
+  ],
+  "author": "Kinokus",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Kinokus/scrapeItAll/issues"
+  },
+  "homepage": "https://github.com/Kinokus/scrapeItAll#readme",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "cheerio": "^1.0.0-rc.2",
+    "cors": "^2.8.4",
+    "ejs": "^2.5.7",
+    "express": "^4.16.2",
+    "form-urlencoded": "^2.0.4",
+    "jsonfile": "^4.0.0",
+    "md5": "^2.2.1",
+    "puppeteer": "^0.13.0",
+    "request": "^2.83.0"
+  }
+}
