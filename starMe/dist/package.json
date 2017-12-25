@@ -37,9 +37,11 @@
     "ejs": "^2.5.7",
     "express": "^4.16.2",
     "form-urlencoded": "^2.0.4",
+    "google-search": "0.0.5",
     "jsonfile": "^4.0.0",
     "md5": "^2.2.1",
     "puppeteer": "^0.13.0",
-    "request": "^2.83.0"
+    "request": "^2.83.0",
+    "yandex-search": "^1.0.0"
   }
 }
