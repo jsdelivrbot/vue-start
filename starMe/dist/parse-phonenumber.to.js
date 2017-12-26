@@ -57,7 +57,19 @@ let scrape = async () => {
     // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D0%B2%D0%B0%D1%81%D0%B8%D0%BB%D0%B8%D0%B9&lr=130',
     // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D0%BA%D0%BB%D1%83%D0%B1&lr=130',
     // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D0%BA%D0%BE%D0%BB%D0%BB%D0%B5%D0%BA%D1%82%D0%BE%D1%80&lr=130',
-    'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D1%80%D0%B8%D1%8D%D0%BB%D1%82%D0%BE%D1%80&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D1%80%D0%B8%D1%8D%D0%BB%D1%82%D0%BE%D1%80&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D0%B1%D0%B0%D0%BD%D0%BA&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D0%BA%D0%B8%D0%B4%D0%B0%D0%BB%D0%B0&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D1%80%D0%BE%D0%B3%D0%BE%D0%B7%D0%B8%D0%BD&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D1%80%D0%BE%D0%B3&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20yandex.ru&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20mail.ru&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20gmail.com&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20aleks%20gmail.com&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D0%B2%D0%B0%D1%81%D0%B8%D0%BB%D0%B8%D1%81%D0%B0&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D0%BF&lr=130',
+    // 'https://yandex.ru/search/?text=host%3Aphonenumber.to%20%D1%80%D0%BE%D0%B6%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F&lr=130',
+    'https://yandex.ru/search/?text=host%3Aphonenumber.to%20Колян%20mail.ru',
   ];
   let yandexBrowserSearch = async (url, page) => {
     return new Promise(async function (resolve, reject) {
@@ -75,14 +87,49 @@ let scrape = async () => {
         await page.waitFor(3000);
         console.log(i, items.length);
       }
-      console.log(url,items.length, items);
+      console.log(url, items.length, items);
       resolve();
     });
-
   };
 
   for (let i = 0; i < urls.length; i++) {
     await yandexBrowserSearch(urls[i], page)
+  }
+
+
+  urls = [
+    'https://phonenumber.to/search?text=Колян%20gmail.com'
+  ];
+  let internalPhonenumberSearch = async (url, page) => {
+    return new Promise(async function (resolve, reject) {
+      let nextState = true;
+      await page.goto(url);
+      (await page.$$eval('[class="search_heading"] a', items => items.map(item => item.href))).map(href => items.push(href));
+      yandexPages = 500;
+      for (let i = 0; i <= yandexPages && nextState; i++) {
+        (await page.$$eval('[class="search_heading"] a', items => items.map(item => item.href))).map(href => items.push(href));
+        try {
+          await page.$$eval('[class="pagination"] li a', items => {
+            if (items[items.length - 1].innerText.includes('Next')) {
+              items[items.length - 1].click()
+            } else {
+              nextState = false;
+              i = yandexPages + 1;
+            }
+          });
+        } catch (error) {
+          nextState = false
+        }
+        await page.waitFor(3000);
+        console.log(i, items.length);
+      }
+      console.log(url, items.length, items);
+      resolve();
+    });
+  };
+
+  for (let i = 0; i < urls.length; i++) {
+    await internalPhonenumberSearch(urls[i], page)
   }
 
 
@@ -94,7 +141,7 @@ let scrape = async () => {
   items = await items.filter((v, i, a) => v.includes('/phone/'));
 
 
-  console.log('THE END',items.length);
+  console.log('THE END', items.length);
 
   await jsonfile.writeFileSync(pages, items, {spaces: 1});
   await page.close();
