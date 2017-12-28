@@ -1,0 +1,21 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	ignorecase = true
+	hideDotFiles = dotGitOnly
+[remote "origin"]
+	url = https://github.com/Kinokus/scrapeItAll.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "master"]
+	remote = heroku
+	merge = refs/heads/master
+[remote "heroku"]
+	url = https://git.heroku.com/tranquil-oasis-53495.git
+	fetch = +refs/heads/*:refs/remotes/heroku/*
+
+
+[remote "vue-start-heroku"]
+	url = https://github.com/Kinokus/vue-start-heroku.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
