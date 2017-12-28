@@ -6,4 +6,4 @@ git pull heroku master
 git add *
 git commit -a -m 'renew static'
 git push heroku master
-git push origin master
+rem git push origin master

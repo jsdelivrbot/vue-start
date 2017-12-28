@@ -4,10 +4,6 @@
   <div id="app">
     <!--<img src="./assets/logo.png">-->
     <router-view></router-view>
-    
-    
-  
-  
   </div>
 </template>
 
@@ -27,12 +23,13 @@
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
-    margin-top: 60px;
-    left: 60px;
-    right: 60px;
-    top: 60px;
+    margin-top: 2px;
+    left: 2px;
+    right: 2px;
+    top: 2px;
     height: calc(90% - 60px);
-    
+    background-color: #bdbdbd;
+    overflow: scroll;
   }
   
   .btn-icon {

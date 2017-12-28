@@ -23,6 +23,10 @@ app
     // res.send('Hello World!');
     res.sendFile('index.html', {root: __dirname})
   })
+  .get('/getDataOrbita', function (req, res) {
+    // res.send('Hello World!');
+    res.sendFile('parse-orbita.co.il.entities.json', {root: __dirname})
+  })
   .post('/save', function (req, res, bdy) {
     console.log("save");
     res.send('post save passed');

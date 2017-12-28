@@ -5,3 +5,4 @@ node_modules
 .git1/
 biz\.js--
 biz.js--
+*.7z
