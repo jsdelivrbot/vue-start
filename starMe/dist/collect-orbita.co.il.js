@@ -15,7 +15,7 @@ let scrape = async () => {
   let items = await jsonfile.readFileSync(arrayFile);
   let entities = await jsonfile.readFileSync(entitiesFile);
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 10; i++) {
   // for (let i in items) {
     await page.goto(items[i]);
     let entity = {};
@@ -40,7 +40,23 @@ let scrape = async () => {
 
     let images = await page.$$eval('.row.images-all a.thumbnail.preview', items => items.map(item => item.href));
     entity.images = images;
+
+
+    entity =
+      JSON.parse(
+        JSON.stringify(entity)
+          .replace('Цена:', 'price')
+          .replace('Мебель:', 'furniture')
+          .replace('Этаж:', 'floor')
+          .replace('Комнаты:', 'rooms')
+          .replace('Район/Улица:', 'area')
+          .replace(/Не указано/g, '-')
+          .replace(/Тел/g, 'phone')
+      );
+
     entities.push(entity);
+
+
     await jsonfile.writeFileSync(entitiesFile, entities, {spaces: 1});
 
     console.log('---------------------------------\n', entity, '\n---------------------------------',);
