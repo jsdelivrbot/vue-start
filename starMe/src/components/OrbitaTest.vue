@@ -2,31 +2,58 @@
   <div class="orbita">
     <div class="mainContentOrbita">
       <md-table class="mainTable">
-        <md-table-header>
-          <md-table-row>
-            <!--<md-table-head v-for="(header) in dataOrbitaHeaders">{{header}}</md-table-head>-->
-            <md-table-head v-for="hdr in dataOrbitaHeaders">{{hdr}}</md-table-head>
-          </md-table-row>
-        </md-table-header>
+        <!--<md-table-header>-->
+        <!--<md-table-row>-->
+        <!--&lt;!&ndash;<md-table-head v-for="(header) in dataOrbitaHeaders">{{header}}</md-table-head>&ndash;&gt;-->
+        <!--<md-table-head v-for="hdr in dataOrbitaHeaders">{{hdr}}</md-table-head>-->
+        <!--</md-table-row>-->
+        <!--</md-table-header>-->
         
         <md-table-body>
           <md-table-row v-for="rowOrbita in dataOrbita">
             <!--<md-table-cell v-for="cellOrbita in rowOrbita">{{cellOrbita}}</md-table-cell>-->
             <md-table-cell class="detailsTab">
               <div class="detailsTab">
-                <div>{{rowOrbita.price}}</div>
-                <div>{{rowOrbita.city}}</div>
-                <div>{{rowOrbita.area}}</div>
-                <div>{{rowOrbita.furniture}}</div>
-                <div>{{rowOrbita.floor}}</div>
-                <div>{{rowOrbita.rooms}}</div>
+                <div class="price detailsDiv">
+                  <span class="detailHeder">₪ Price</span>
+                  <span class="detailValue">{{rowOrbita.price}}</span>
+                </div>
+                <div class="city detailsDiv">
+                  <span class="detailHeder">City</span>
+                  <span class="detailValue">{{rowOrbita.city}}</span>
+                </div>
+                
+                <div class="detailsDiv">
+                  <!--<span class="detailHeder">Street</span>-->
+                  <span>{{rowOrbita.area}}</span>
+                </div>
+                
+                
+                <div class="detailsDiv">
+                  <span class="detailHeder">Furniture</span>
+                  <span class="detailValue">{{rowOrbita.furniture}}</span>
+                </div>
+                <div class="detailsDiv">
+                  <span class="detailHeder">Floor</span>
+                  <span class="detailValue">{{rowOrbita.floor}}</span>
+                </div>
+                <div class="detailsDiv">
+                  <span class="detailHeder">Rooms</span>
+                  <span class="detailValue">{{rowOrbita.rooms}}</span>
+                </div>
+                <br><br>
+                <div class="phoneDetail detailsDiv">
+                  <span class="detailHeder">Phone</span>
+                  <span class="detailValue">{{rowOrbita.phone || '-'}}</span>
+                </div>
+              
               </div>
-              <div>
-                <div class="phoneDetail">{{rowOrbita.phone}}</div>
-              </div>
+            
+            
             </md-table-cell>
             <md-table-cell class="textTab">
               <div class="fullText">{{rowOrbita.fullText}}</div>
+            
             </md-table-cell>
             <md-table-cell class="photoTab">
               
@@ -276,7 +303,6 @@
   .fa-icon {
     width: auto;
     height: 1em; /* or any other relative font sizes */
-    
     /* You would have to include the following two lines to make this work in Safari */
     max-width: 100%;
     max-height: 100%;
@@ -301,7 +327,8 @@
     text-align: justify;
     font-size: 16px;
     vertical-align: top;
-    
+    position: absolute;
+    top: 12px;
   }
   
   .mainTable {
@@ -315,16 +342,34 @@
   }
   
   .detailsTab {
-    
+    min-height: 16em;
     width: 300px;
     text-align: left;
     vertical-align: top;
   }
-
-  .phoneDetail{
+  
+  .phoneDetail {
     
-    vertical-align: bottom;
-    margin: auto;
+    bottom: 8px;
   }
   
+  .detailsDiv {
+    /*width: 300px;*/
+    font-size: 18px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .detailValue {
+    display: inline-block;
+    position: absolute;
+    right: 16px;
+  }
+
+  .price{
+    color: darkred;
+  }
+  
+  
+
 </style>

@@ -15,8 +15,8 @@ let scrape = async () => {
   let items = await jsonfile.readFileSync(arrayFile);
   let entities = await jsonfile.readFileSync(entitiesFile);
 
-  for (let i = 0; i < 10; i++) {
-  // for (let i in items) {
+  // for (let i = 0; i < 100; i++) {
+  for (let i in items) {
     await page.goto(items[i]);
     let entity = {};
     let captionText = await page.$$eval('.caption .row div', items => items.map(item => item.innerText));
