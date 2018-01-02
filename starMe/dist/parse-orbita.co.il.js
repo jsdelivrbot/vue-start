@@ -14,7 +14,7 @@ let scrape = async () => {
         let items = await jsonfile.readFileSync(arrayFile);
         let nextState = true;
         await page.goto(url);
-        let max = 20;
+        let max = 3;
         for (let i = 0; i <= max && nextState; i++) {
           (await page.$$eval('div.message-id a', items => items.map(item => item.href))).map(href => items.push(href));
           try {

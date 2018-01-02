@@ -52,6 +52,7 @@ let scrape = async () => {
           .replace('Район/Улица:', 'area')
           .replace(/Не указано/g, '-')
           .replace(/Тел/g, 'phone')
+          .replace(/ шек\./gi, '')
       );
 
     entities.push(entity);
