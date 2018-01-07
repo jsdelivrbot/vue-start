@@ -4,6 +4,10 @@ const jsonfile = require('jsonfile');
 let arrayFile = 'parse-orbita.co.il.array.json';
 
 let scrape = async () => {
+
+  // renew list
+  await jsonfile.writeFileSync(arrayFile, [], {spaces: 1});
+
   const browser = await puppeteer.launch({headless: false});
   const page = await browser.newPage();
   await page.setViewport({width: 1920, height: 1920});
@@ -14,7 +18,7 @@ let scrape = async () => {
         let items = await jsonfile.readFileSync(arrayFile);
         let nextState = true;
         await page.goto(url);
-        let max = 3;
+        let max = 5;
         for (let i = 0; i <= max && nextState; i++) {
           (await page.$$eval('div.message-id a', items => items.map(item => item.href))).map(href => items.push(href));
           try {

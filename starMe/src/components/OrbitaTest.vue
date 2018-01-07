@@ -3,7 +3,9 @@
     <div class="mainContentOrbita">
       
       <div class="containerMain" v-for="rowOrbita in dataOrbita">
-        <div class="header"><div>{{rowOrbita.city}}</div></div>
+        <div class="header">
+          <div>{{rowOrbita.city}}</div>
+        </div>
         <div class="main">{{rowOrbita.fullText}}</div>
         <div class="contact">
           <div>{{rowOrbita.phone}}</div>
@@ -15,12 +17,24 @@
           <img v-for="image in rowOrbita.images" v-bind:src="image" v-on:click="setImg(rowOrbita, image)">
         </div>
         
-        <div class="floor">{{rowOrbita.floor}}</div>
-        <div class="furniture">{{rowOrbita.furniture}}</div>
-        <div class="rooms"> {{rowOrbita.rooms}}</div>
-        <div class="parking"> {{rowOrbita.parking}}</div>
-        <div class="date"><div>{{rowOrbita.date}}</div></div>
-        <div class="address"><div>{{rowOrbita.area}}</div></div>
+        <div class="floor">
+          <div>{{rowOrbita.floor}}</div>
+        </div>
+        <div class="furniture">
+          <div>{{rowOrbita.furniture}}</div>
+        </div>
+        <div class="rooms">
+          <div>{{rowOrbita.rooms}}</div>
+        </div>
+        <div class="parking">
+          <div>{{rowOrbita.parking}}</div>
+        </div>
+        <div class="date">
+          <div>{{rowOrbita.date}}</div>
+        </div>
+        <div class="address">
+          <div>{{rowOrbita.area}}</div>
+        </div>
         <div class="price">
           <div>{{rowOrbita.price}}</div>
         </div>
@@ -409,6 +423,13 @@
   /*}*/
   .rooms {
     grid-area: r0;
+  }
+  
+  .rooms-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMjIuNjggMjIuNjgiPjxkZWZzPjxzdHlsZT4uY2xzLTEsLmNscy0yLC5jbHMtNXtmaWxsOm5vbmU7fS5jbHMtMiwuY2xzLTV7c3Ryb2tlOiMxZDFkMWI7fS5jbHMtMntzdHJva2UtbWl0ZXJsaW1pdDozLjg2O3N0cm9rZS13aWR0aDowLjlweDt9LmNscy0ze2ZpbGw6IzFkMWQxYjt9LmNscy00e2NsaXAtcGF0aDp1cmwoI2NsaXAtcGF0aCk7fS5jbHMtNXtzdHJva2Utd2lkdGg6MC4yNXB4O308L3N0eWxlPjxjbGlwUGF0aCBpZD0iY2xpcC1wYXRoIj48cmVjdCBjbGFzcz0iY2xzLTEiIHdpZHRoPSIyMi42OCIgaGVpZ2h0PSIyMi42OCIvPjwvY2xpcFBhdGg+PC9kZWZzPjx0aXRsZT5TS0EtSUNPTlNfUlpfMjkwNzIwMTY8L3RpdGxlPjxnIGlkPSJFYmVuZV8xIiBkYXRhLW5hbWU9IkViZW5lIDEiPjxwb2x5Z29uIGNsYXNzPSJjbHMtMiIgcG9pbnRzPSIyLjg0IDMuNDcgMTkuODQgMy40NyAxOS44NCA5LjcxIDE5Ljg0IDEyLjgzIDE5Ljg0IDE5LjIxIDEyLjYyIDE5LjIxIDEyLjYyIDEyLjgzIDIuODQgMTIuODMgMi44NCAzLjQ3IDIuODQgMy40NyIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMTIuMTciIHk9IjkuMSIgd2lkdGg9IjAuOSIgaGVpZ2h0PSIzLjM5Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxMi41IiB5PSIxMi4zOSIgd2lkdGg9IjIuMiIgaGVpZ2h0PSIwLjkiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjE3LjUiIHk9IjEyLjM5IiB3aWR0aD0iMi43NiIgaGVpZ2h0PSIwLjkiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjEyLjE3IiB5PSIzLjA1IiB3aWR0aD0iMC45IiBoZWlnaHQ9IjMuMzkiLz48L2c+PGcgaWQ9IlJhaG1lbiI+PGcgY2xhc3M9ImNscy00Ij48cGF0aCBjbGFzcz0iY2xzLTUiIGQ9Ik0yLjgzLjEzQTIuNjMsMi42MywwLDAsMCwuMTMsMi44M3YxN2EyLjYzLDIuNjMsMCwwLDAsMi43MSwyLjcxaDE3YTIuNjMsMi42MywwLDAsMCwyLjcxLTIuNzF2LTE3QTIuNjMsMi42MywwLDAsMCwxOS44NC4xM2gtMTdaIi8+PC9nPjwvZz48L3N2Zz4=');
   }
   
   .floor {

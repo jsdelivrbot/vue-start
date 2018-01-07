@@ -42,8 +42,10 @@
     "json2csv": "^3.11.5",
     "jsonfile": "^4.0.0",
     "md5": "^2.2.1",
+    "node-telegram-bot": "^0.1.9",
     "puppeteer": "^0.13.0",
     "request": "^2.83.0",
+    "telegraf": "^3.17.3",
     "yandex-search": "^1.0.0"
   }
 }
