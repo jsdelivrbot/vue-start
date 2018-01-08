@@ -96,16 +96,17 @@ bot.action(/City|Price|Rooms/gi, ctx => {
   } else if (myChoice.step === 'rooms') {
     text = 'Your result:';
     myChoice.step = 'result';
-    let results = [];
-    let resultsFull = entities.filter(e => e.rooms >= myChoice.rooms-0 && e.price <= myChoice.price-0 && e.city === myChoice.city);
-    results = resultsFull.map(e => e.phone);
+    let resultsFull = entities.filter(e => e.rooms >= myChoice.rooms - 0 && e.price <= myChoice.price - 0 && e.city === myChoice.city);
+
+    // TODO sort by price/rooms
+
     buttons = resultsFull.map(e => {
-      // myChoice.result = e;
-      // myChoice.phone = e.phone;
       myChoice.step = 'result';
-      return [Markup.callbackButton(e.phone || 'no phone', JSON.stringify(myChoice))]
+      return [Markup.callbackButton(e.rooms + '/' + e.price, JSON.stringify(myChoice))]
     });
   }
+
+
 
   console.log(buttons);
 
