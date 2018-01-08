@@ -46,6 +46,7 @@
     "puppeteer": "^0.13.0",
     "request": "^2.83.0",
     "telegraf": "^3.17.3",
+    "telegram-node-bot": "^4.0.5",
     "yandex-search": "^1.0.0"
   }
 }

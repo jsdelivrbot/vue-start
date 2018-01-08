@@ -1,18 +1,41 @@
-const Telegraf = require('telegraf');
-const bot = new Telegraf('471562304:AAEbH3GBmibD1TXUxHtL6g9m9827Bhlt0z4');
+const Telegram = require('telegram-node-bot');
+const TelegramBaseController = Telegram.TelegramBaseController;
+const TextCommand = Telegram.TextCommand;
+const tg = new Telegram.Telegram('471562304:AAEbH3GBmibD1TXUxHtL6g9m9827Bhlt0z4');
 
 
-bot.start((ctx) => {
-  console.log('started:', ctx.from.id);
-  return ctx.reply('Welcome!')
-});
+class PingController extends TelegramBaseController {
+  /**
+   * @param {Scope} $
+   */
+  static pingHandler($) {
+    $.sendMessage('pong')
+  }
 
-bot.command('help', (ctx) => ctx.reply('Try send a sticker!'));
-bot.command('start', (ctx) => ctx.reply(''));
-bot.hears('hi', (ctx) => ctx.reply('Hey there!'));
-bot.hears(/buy/gi, (ctx) => ctx.reply('Buy-buy!'));
-bot.on('sticker', (ctx) => ctx.reply('👍'));
-bot.catch((err) => {
-  console.log('Ooops', err)
-})
-bot.startPolling();
+  get routes() {
+    return {
+      'pingCommand': 'pingHandler'
+    }
+  }
+}
+class StartController extends TelegramBaseController {
+  /**
+   * @param {Scope} $
+   */
+  static startHandler($) {
+    $.sendMessage('You are started!')
+  }
+
+  get routes() {
+    return {
+      'startCommand': 'startHandler'
+    }
+  }
+}
+
+
+tg.router
+  .when(new TextCommand('ping', 'pingCommand'), new PingController())
+  .when(new TextCommand('/start', 'startCommand'), new StartController())
+  // .when(new TextCommand('/stop', 'stopCommand'), new StopController())
+  // .when(new TextCommand('/restart', 'restartCommand'), new RestartController())
