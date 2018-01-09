@@ -12,7 +12,22 @@ let arrayFile = 'parse-orbita.co.il.array.json';
 let entitiesFile = 'parse-orbita.co.il.entities.json';
 let json2csv = require('json2csv');
 let fs = require('fs');
+const md5 = require('md5');
+const md4 = require('js-md4');
+const btoa = require('btoa')
+
+
 let entities = jsonfile.readFileSync(entitiesFile);
+entities = entities.map((e, i) => {
+  e.idx = i;
+  return e
+});
+let cities = entities.map(e => e.city).filter((v, i, a) => a.indexOf(v) === i);
+let cityBtoaIndex = {};
+let btoaCityIndex = {};
+cities.map(e => cityBtoaIndex[e] = btoa(e));
+cities.map(e => btoaCityIndex [btoa(e)] = e);
+console.log(cityBtoaIndex);
 
 
 bot.start((ctx) => {
@@ -20,7 +35,7 @@ bot.start((ctx) => {
 });
 
 bot.command('help', (ctx) => ctx.reply('Try send a sticker!'));
-bot.command('start', (ctx) => ctx.reply(''));
+// bot.command('start', (ctx) => ctx.reply(''));
 bot.hears('hi', (ctx) => ctx.reply('Hey there!'));
 bot.hears(/buy/gi, (ctx) => ctx.reply('Buy-buy!'));
 bot.hears(/\[/gi, (ctx) => ctx.reply(']'));
@@ -35,8 +50,8 @@ bot.command('city', (ctx) => {
 
   let buttons = cityArray.map(e => {
     let myChoice = {};
-    myChoice.city = e;
-    myChoice.step = 'city';
+    myChoice.city = cities.indexOf(e);
+    myChoice.s = 'city';
     return [Markup.callbackButton(e, JSON.stringify(myChoice))]
   });
   return ctx.reply('Cities:', Extra.markup(Markup.inlineKeyboard(buttons)))
@@ -72,45 +87,70 @@ bot.action(/Coke|Pepsi|Pepper/gi, ctx => {
   console.log(ctx);
 });
 
-bot.action(/City|Price|Rooms/gi, ctx => {
+bot.action(/City|Price|Rooms|Result/gi, ctx => {
   let myChoice = JSON.parse(ctx.match.input);
   let buttons = [];
-  let text = '';
-  if (myChoice.step === 'city') {
-    text = 'Choose price:';
+  let text = `
+     City:  ${cities[myChoice.city]}
+     Price: ${myChoice.p || 'please select maximum price'}
+     Rooms: ${myChoice.rooms || 'please select minimum number of rooms'}
+     Done:  ${myChoice.rIdx ? `<b>Phone</b>:${entities[myChoice.rIdx].phone}\n${entities[myChoice.rIdx].fullText}` : 'please select one of results to view card'}
+    `;
+
+
+  if (myChoice.s === 'city') {
+    console.log('city');
     let prices = [1000, 2000, 3000, 4000, 5000, 6000, 7000];
     buttons = prices.map(e => {
-      myChoice.step = 'price';
-      myChoice.price = e;
+      myChoice.s = 'price';
+      myChoice.p = e;
       return [Markup.callbackButton(e, JSON.stringify(myChoice))]
-    });
-    // ctx.editMessageText('Choosen: ' + myChoice.step, Extra.markup(Markup.inlineKeyboard(pricesButtons)));
-  } else if (myChoice.step === 'price') {
-    text = 'Choose number of rooms:';
-    let rooms = [1, 2, 3, 4, 5, 6, 7];
-    buttons = rooms.map(e => {
-      myChoice.step = 'rooms';
-      myChoice.rooms = e;
-      return Markup.callbackButton(e, JSON.stringify(myChoice))
-    });
-  } else if (myChoice.step === 'rooms') {
-    text = 'Your result:';
-    myChoice.step = 'result';
-    let resultsFull = entities.filter(e => e.rooms >= myChoice.rooms - 0 && e.price <= myChoice.price - 0 && e.city === myChoice.city);
-
-    // TODO sort by price/rooms
-
-    buttons = resultsFull.map(e => {
-      myChoice.step = 'result';
-      return [Markup.callbackButton(e.rooms + '/' + e.price, JSON.stringify(myChoice))]
     });
   }
 
+  else if (myChoice.s === 'price') {
+
+    let rooms = [1, 2, 3, 4, 5, 6, 7];
+    buttons = rooms.map(e => {
+      myChoice.s = 'rooms';
+      myChoice.rooms = e;
+      return Markup.callbackButton(e, JSON.stringify(myChoice))
+    });
+  }
+
+  else if (myChoice.s === 'rooms') {
+    myChoice.s = 'result';
+    // console.log(cities[myChoice.city]);
+    let resultsFull = entities.filter(e => e.rooms >= myChoice.rooms - 0 && e.price - 0 <= myChoice.p - 0 && e.city === cities[myChoice.city]);
+    resultsFull = resultsFull.sort((a, b) => a.price / a.rooms - b.price / b.rooms);
+
+    buttons = resultsFull.map(e => {
+      myChoice.s = 'result';
+      myChoice.rIdx = e.idx;
+      myChoice.p = e.price;
+      return [Markup.callbackButton('[🚪' + e.rooms + '][💴' + e.price + (e.images.length > 0 ? '][📷]' : ']') + '[🗺' + e.area + ']', JSON.stringify(myChoice))]
+    });
+  }
+
+  else if (myChoice.s === 'result') {
+    myChoice.s = 'theEnd';
+    console.log(myChoice);
+    if (myChoice.rIdx && entities[myChoice.rIdx].images.length > 0) {
+      let album = entities[myChoice.rIdx].images.map(e => {
+        return {
+          media: e,
+          'caption': 'From URL',
+          'type': 'photo'
+        }
+      });
+      ctx.replyWithMediaGroup(album);
+    }
 
 
-  console.log(buttons);
-
-  ctx.reply(text || '', Extra.markup(Markup.inlineKeyboard(buttons)))
+    // console.log(cities[myChoice.city]);
+  }
+  // console.log(buttons);
+  ctx.replyWithHTML(text || '', Extra.markup(Markup.inlineKeyboard(buttons)))
     .then(e => {
     })
     .catch(er => {

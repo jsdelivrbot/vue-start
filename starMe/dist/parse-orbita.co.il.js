@@ -50,6 +50,9 @@ let scrape = async () => {
   // bat-yam
   await internalOrbitaSearch('http://doska.orbita.co.il/nadlan/for_rent/?place=city10&roomf=0&roomt=0&costf=&costt=&cur=30', page);
 
+  //Holon
+  await internalOrbitaSearch('http://doska.orbita.co.il/nadlan/for_rent/?place=city88&roomf=0&roomt=0&costf=&costt=&cur=30', page);
+
 
 
 

@@ -32,6 +32,7 @@
   "homepage": "https://github.com/Kinokus/scrapeItAll#readme",
   "dependencies": {
     "body-parser": "^1.18.2",
+    "btoa": "^1.1.2",
     "cheerio": "^1.0.0-rc.2",
     "cors": "^2.8.4",
     "ejs": "^2.5.7",
@@ -39,6 +40,8 @@
     "form-urlencoded": "^2.0.4",
     "fs": "0.0.1-security",
     "google-search": "0.0.5",
+    "hashlib": "^1.0.1",
+    "js-md4": "^0.3.2",
     "json2csv": "^3.11.5",
     "jsonfile": "^4.0.0",
     "md5": "^2.2.1",
