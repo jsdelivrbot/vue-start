@@ -24,49 +24,55 @@ let scrape = async () => {
   for (let i in items) {
     await page.goto(items[i]);
     let entity = {};
-    let captionText = await page.$$eval('.caption .row div', items => items.map(item => item.innerText));
-    // console.log(captionText);
-    entity.type = captionText[0];
-    entity.city = captionText[1];
-    entity.date = captionText[2];
+    let captionText = '';
+    try {
+      captionText = await page.$$eval('.caption .row div', items => items.map(item => item.innerText));
 
-    let detailText = await page.$$eval('.infodetail .row div', items => items.map(item => item.innerText));
-    // console.log(detailText);
-    for (let j = 0; j < (detailText.length - 1) / 2; j++) {
-      entity[detailText[j * 2]] = detailText[j * 2 + 1];
+      // console.log(captionText);
+      entity.type = captionText[0];
+      entity.city = captionText[1];
+      entity.date = captionText[2];
+
+      let detailText = await page.$$eval('.infodetail .row div', items => items.map(item => item.innerText));
+      // console.log(detailText);
+      for (let j = 0; j < (detailText.length - 1) / 2; j++) {
+        entity[detailText[j * 2]] = detailText[j * 2 + 1];
+      }
+
+      let infoText = await page.$$eval('.information', items => items.map(item => item.innerText));
+      entity.fullText = infoText[0];
+
+      let msgInfo = await page.$$eval('.row.message-info div', items => items.map(item => item.innerText));
+      let phone = msgInfo[msgInfo.length - 1].split(':');
+      entity[phone[0]] = phone[1];
+
+      let images = await page.$$eval('.row.images-all a.thumbnail.preview', items => items.map(item => item.href));
+      entity.images = images;
+
+
+      entity =
+        JSON.parse(
+          JSON.stringify(entity)
+            .replace('Цена:', 'price')
+            .replace('Мебель:', 'furniture')
+            .replace('Этаж:', 'floor')
+            .replace('Комнаты:', 'rooms')
+            .replace('Район/Улица:', 'area')
+            .replace(/Не указано/g, '-')
+            .replace(/Тел/g, 'phone')
+            .replace(/ шек\./gi, '')
+        );
+
+      entities.push(entity);
+
+
+      await jsonfile.writeFileSync(entitiesFile, entities, {spaces: 1});
+      console.log('---------------------------------\n', entity.city, i, '\n---------------------------------',);
+    } catch (err) {
+      console.log(err)
     }
 
-    let infoText = await page.$$eval('.information', items => items.map(item => item.innerText));
-    entity.fullText = infoText[0];
-
-    let msgInfo = await page.$$eval('.row.message-info div', items => items.map(item => item.innerText));
-    let phone = msgInfo[msgInfo.length - 1].split(':');
-    entity[phone[0]] = phone[1];
-
-    let images = await page.$$eval('.row.images-all a.thumbnail.preview', items => items.map(item => item.href));
-    entity.images = images;
-
-
-    entity =
-      JSON.parse(
-        JSON.stringify(entity)
-          .replace('Цена:', 'price')
-          .replace('Мебель:', 'furniture')
-          .replace('Этаж:', 'floor')
-          .replace('Комнаты:', 'rooms')
-          .replace('Район/Улица:', 'area')
-          .replace(/Не указано/g, '-')
-          .replace(/Тел/g, 'phone')
-          .replace(/ шек\./gi, '')
-      );
-
-    entities.push(entity);
-
-
-    await jsonfile.writeFileSync(entitiesFile, entities, {spaces: 1});
-
-    console.log('---------------------------------\n', entity, '\n---------------------------------',);
-
+    // console.log('---------------------------------\n', entity, '\n---------------------------------',);
   }
 
 

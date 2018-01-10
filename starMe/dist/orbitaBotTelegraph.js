@@ -91,10 +91,12 @@ bot.action(/City|Price|Rooms|Result/gi, ctx => {
   let myChoice = JSON.parse(ctx.match.input);
   let buttons = [];
   let text = `
-     City:  ${cities[myChoice.city]}
-     Price: ${myChoice.p || 'please select maximum price'}
-     Rooms: ${myChoice.rooms || 'please select minimum number of rooms'}
-     Done:  ${myChoice.rIdx ? `<b>Phone</b>:${entities[myChoice.rIdx].phone}\n${entities[myChoice.rIdx].fullText}` : 'please select one of results to view card'}
+<b>City:</b>  ${cities[myChoice.city]}
+${myChoice.p ? '<b>Price:</b>' + myChoice.p : ''}
+${myChoice.rooms ? '<b>Rooms:</b> ' + myChoice.rooms : ''}
+${myChoice.rIdx ? `<b>Phone</b>:${entities[myChoice.rIdx].phone}` : 'tap on result to view card'}
+${myChoice.rIdx ? `<b>Area</b>:${entities[myChoice.rIdx].area}` : ''}
+${myChoice.rIdx ? `${entities[myChoice.rIdx].fullText}` : ''}
     `;
 
 
@@ -135,23 +137,26 @@ bot.action(/City|Price|Rooms|Result/gi, ctx => {
   else if (myChoice.s === 'result') {
     myChoice.s = 'theEnd';
     console.log(myChoice);
-    if (myChoice.rIdx && entities[myChoice.rIdx].images.length > 0) {
-      let album = entities[myChoice.rIdx].images.map(e => {
-        return {
-          media: e,
-          'caption': 'From URL',
-          'type': 'photo'
-        }
-      });
-      ctx.replyWithMediaGroup(album);
-    }
-
-
     // console.log(cities[myChoice.city]);
   }
   // console.log(buttons);
   ctx.replyWithHTML(text || '', Extra.markup(Markup.inlineKeyboard(buttons)))
     .then(e => {
+      if (
+        myChoice.s === 'theEnd' &&
+        myChoice.rIdx &&
+        entities[myChoice.rIdx].images.length > 0
+      ) {
+        let album = entities[myChoice.rIdx].images.map(e => {
+          return {
+            media: e,
+            'caption': 'From URL',
+            'type': 'photo'
+          }
+        });
+        ctx.replyWithMediaGroup(album);
+        myChoice.rIdx = undefined;
+      }
     })
     .catch(er => {
       console.log(er);
